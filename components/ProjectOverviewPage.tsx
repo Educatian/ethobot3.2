@@ -21,6 +21,7 @@ const ProjectOverviewPage: React.FC<ProjectOverviewPageProps> = ({ onBack, onLog
           'Jonassen은 학습자가 어떤 종류의 문제를 다루는지 설명해주고, 딜레마 기반 교수법은 어떤 종류의 대화가 필요한지 설명해줍니다. ETHOBOT은 이 둘을 단계적이고 성찰적인 윤리 학습 공간으로 조율합니다.',
         back: '학습자 화면으로 돌아가기',
         contributors: '기여자',
+        researchOverview: '연구 개요',
         threeLens: '세 가지 렌즈, 하나의 학습 설계',
         alignment: '왜 이 둘이 잘 맞는가',
         flow: 'ETHOBOT이 이론을 상호작용으로 바꾸는 방식',
@@ -52,6 +53,18 @@ const ProjectOverviewPage: React.FC<ProjectOverviewPageProps> = ({ onBack, onLog
           ['논증과 근거의 필요', '정당화, 한정, 수정 요청', '정당화 요청, 가치 탐색, closure delay 개입'],
           ['메타인지와 성찰의 중요성', '자기 추론 과정을 돌아보게 하기', 'reflection starter, 자기평가 프롬프트, 코칭 애널리틱'],
         ],
+        studyCards: [
+          [
+            '연구 1. 윤리적 추론 조절의 계산 모델링',
+            'ETHOBOT의 상태 추적과 개입 로직은 학습자의 추론이 어떤 상태에 머무는지 읽고, 언제 관점 전환과 자기평가를 유도해야 하는지 설명하는 규제 관점에서 출발합니다.',
+            ['D/C/P/R 상태 전이', 'perspective gateway', 'self-evaluation as reflective trigger', 'entropy/coherence analytics'],
+          ],
+          [
+            '연구 2. 딜레마 대화와 개방적 탐구 설계',
+            '대화 설계는 결론을 너무 빨리 닫지 않으면서 가치 충돌, trade-off, justification을 유지하는 방식으로 조직됩니다. 이 흐름은 ETHOBOT의 closure delay, counter-perspective, value probe에 직접 연결됩니다.',
+            ['closure delay', 'counter-perspective sequencing', 'value probe', 'continuous openness orientation'],
+          ],
+        ],
         noteBody:
           '이 페이지는 ETHOBOT을 위한 설계 종합입니다. Jonassen의 비구조적 문제해결과 대화 중심 딜레마 교수법을 함께 해석해 인터페이스, 프롬프트, 애널리틱 설계를 정리한 것입니다.',
       }
@@ -65,6 +78,7 @@ const ProjectOverviewPage: React.FC<ProjectOverviewPageProps> = ({ onBack, onLog
           'Jonassen helps define the kind of problem learners are facing. Dilemma-based pedagogy helps define the kind of dialogue they need. ETHOBOT coordinates the two into a staged, reflective ethics workspace.',
         back: 'Back to learner workspace',
         contributors: 'Contributors',
+        researchOverview: 'Research Overview',
         threeLens: 'Three lenses, one learning design',
         alignment: 'Why these traditions fit together',
         flow: 'How ETHOBOT translates the theory into interaction',
@@ -95,6 +109,18 @@ const ProjectOverviewPage: React.FC<ProjectOverviewPageProps> = ({ onBack, onLog
           ['Context-dependent judgment', 'Bring stakeholder positions into the conversation', 'Counter-perspective prompts and role-sensitive follow-up questions'],
           ['Need for argument and evidence', 'Ask learners to justify, qualify, and revise', 'Justification requests, value probes, and closure-delay moves'],
           ['Metacognition and reflection matter', 'Help learners inspect their own reasoning process', 'Reflection starters, self-evaluation prompts, and coaching analytics'],
+        ],
+        studyCards: [
+          [
+            'Study 1. Computational Modeling of Ethical Reasoning Regulation',
+            'ETHOBOT’s state tracking and intervention logic draw on a regulatory view of learning: the system reads where reasoning is getting stuck and uses perspective-taking and self-evaluation to support deeper transitions.',
+            ['D/C/P/R state transitions', 'perspective gateway', 'self-evaluation as reflective trigger', 'entropy/coherence analytics'],
+          ],
+          [
+            'Study 2. Dilemma Dialogue and Open Inquiry Design',
+            'The dialogue layer is designed to keep ethical inquiry open long enough for value conflict, trade-offs, and justification to emerge. This directly informs ETHOBOT’s closure delay, counter-perspective, and value-probe moves.',
+            ['closure delay', 'counter-perspective sequencing', 'value probe', 'continuous openness orientation'],
+          ],
         ],
         noteBody:
           'This page is a design synthesis for ETHOBOT. It interprets Jonassen’s account of ill-structured problem solving alongside dialogue-centered dilemma pedagogy to guide interface, prompt, and analytics decisions.',
@@ -165,6 +191,28 @@ const ProjectOverviewPage: React.FC<ProjectOverviewPageProps> = ({ onBack, onLog
                 </div>
               ))}
             </div>
+          </div>
+        </div>
+
+        <div className="border-b border-lyceum-line px-6 py-10 sm:px-10">
+          <p className="text-[10px] font-extrabold uppercase tracking-[0.3em] text-lyceum-muted">{copy.researchOverview}</p>
+          <div className="mt-6 grid gap-6 lg:grid-cols-2">
+            {copy.studyCards.map(study => (
+              <div key={study[0]} className="rounded-[1.75rem] border border-lyceum-line bg-white px-6 py-7 shadow-sm">
+                <h4 className="font-headline text-3xl font-bold leading-tight text-lyceum-ink">{study[0]}</h4>
+                <p className="mt-4 text-sm leading-7 text-lyceum-ink-soft">{study[1]}</p>
+                <div className="mt-5 flex flex-wrap gap-2">
+                  {study[2].map(tag => (
+                    <span
+                      key={tag}
+                      className="rounded-full border border-lyceum-line bg-[#fcfaf4] px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.14em] text-lyceum-accent"
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
 
