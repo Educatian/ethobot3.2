@@ -20,6 +20,7 @@ const ProjectOverviewPage: React.FC<ProjectOverviewPageProps> = ({ onBack, onLog
         thesis:
           'Jonassen은 학습자가 어떤 종류의 문제를 다루는지 설명해주고, 딜레마 기반 교수법은 어떤 종류의 대화가 필요한지 설명해줍니다. ETHOBOT은 이 둘을 단계적이고 성찰적인 윤리 학습 공간으로 조율합니다.',
         back: '학습자 화면으로 돌아가기',
+        contributors: '기여자',
         threeLens: '세 가지 렌즈, 하나의 학습 설계',
         alignment: '왜 이 둘이 잘 맞는가',
         flow: 'ETHOBOT이 이론을 상호작용으로 바꾸는 방식',
@@ -63,6 +64,7 @@ const ProjectOverviewPage: React.FC<ProjectOverviewPageProps> = ({ onBack, onLog
         thesis:
           'Jonassen helps define the kind of problem learners are facing. Dilemma-based pedagogy helps define the kind of dialogue they need. ETHOBOT coordinates the two into a staged, reflective ethics workspace.',
         back: 'Back to learner workspace',
+        contributors: 'Contributors',
         threeLens: 'Three lenses, one learning design',
         alignment: 'Why these traditions fit together',
         flow: 'How ETHOBOT translates the theory into interaction',
@@ -104,6 +106,12 @@ const ProjectOverviewPage: React.FC<ProjectOverviewPageProps> = ({ onBack, onLog
     ['Stolper, M., Molewijk, B., & Widdershoven, G. (2016). Bioethics education in clinical settings: theory and practice of the dilemma method of moral case deliberation.', 'https://pubmed.ncbi.nlm.nih.gov/27448597/'],
     ['Fancourt, N., & Guilfoyle, L. (2022). Interdisciplinary perspective-taking within argumentation.', 'https://link.springer.com/article/10.1007/s40839-021-00143-9'],
   ] as const;
+
+  const contributors = [
+    'Jewoong Moon (The University of Alabama)',
+    'Sumin Hong (Seoul National University)',
+    'Joy Yeonjoo Lee (Leiden University)',
+  ];
 
   return (
     <section className="min-h-0 flex-1 overflow-y-auto bg-transparent px-4 py-6 sm:px-8 lg:px-12">
@@ -230,6 +238,19 @@ const ProjectOverviewPage: React.FC<ProjectOverviewPageProps> = ({ onBack, onLog
           <div className="border-b border-lyceum-line bg-[#f2ebde] px-6 py-8 sm:px-10 lg:border-b-0 lg:border-r">
             <p className="text-[10px] font-extrabold uppercase tracking-[0.3em] text-lyceum-muted">{copy.note}</p>
             <p className="mt-4 max-w-2xl text-sm leading-7 text-lyceum-ink-soft">{copy.noteBody}</p>
+            <div className="mt-8 border-t border-lyceum-line/70 pt-6">
+              <p className="text-[10px] font-extrabold uppercase tracking-[0.3em] text-lyceum-muted">{copy.contributors}</p>
+              <div className="mt-4 space-y-3">
+                {contributors.map(contributor => (
+                  <div
+                    key={contributor}
+                    className="rounded-[1rem] border border-lyceum-line bg-[#fbf7ef] px-4 py-3 text-sm font-medium leading-6 text-lyceum-ink-soft"
+                  >
+                    {contributor}
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
           <div className="bg-white px-6 py-8 sm:px-10">
             <p className="text-[10px] font-extrabold uppercase tracking-[0.3em] text-lyceum-muted">{copy.sources}</p>
