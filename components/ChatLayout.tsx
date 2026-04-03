@@ -11,7 +11,6 @@ import { ArrowDownTrayIcon, InformationCircleIcon } from './icons';
 const TeacherAnalyticsPanel = lazy(() => import('./TeacherAnalyticsPanel'));
 const AboutEthobot = lazy(() => import('./AboutEthobot'));
 const AccountModal = lazy(() => import('./AccountModal'));
-const ProjectOverviewPage = lazy(() => import('./ProjectOverviewPage'));
 const ReflectionMapPage = lazy(() => import('./ReflectionMapPage'));
 
 interface ChatLayoutProps {
@@ -34,7 +33,7 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({ ethobot, onLogout }) => {
   const [isAccountVisible, setIsAccountVisible] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false);
-  const [activeView, setActiveView] = useState<'learner' | 'analytics' | 'project' | 'reflection'>('learner');
+  const [activeView, setActiveView] = useState<'learner' | 'analytics' | 'reflection'>('learner');
   const [isLearnerRailCollapsed, setIsLearnerRailCollapsed] = useState(false);
   const [learnerRailWidth, setLearnerRailWidth] = useState(360);
   const [isResizingLearnerRail, setIsResizingLearnerRail] = useState(false);
@@ -85,9 +84,14 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({ ethobot, onLogout }) => {
     };
   }, [isLearnerRailCollapsed, isResizingLearnerRail]);
 
-  const navigateToView = (view: 'learner' | 'analytics' | 'project' | 'reflection') => {
+  const navigateToView = (view: 'learner' | 'analytics' | 'reflection') => {
     setActiveView(view);
     setIsAccountMenuOpen(false);
+  };
+
+  const openProjectOverview = () => {
+    setIsAccountMenuOpen(false);
+    window.location.assign('/project-overview');
   };
 
   const currentViewLabel =
@@ -95,27 +99,21 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({ ethobot, onLogout }) => {
       ? 'Learner Workspace'
       : activeView === 'analytics'
         ? 'Instructor Analytics'
-        : activeView === 'project'
-          ? 'Project Overview'
-          : 'Reflection Map';
+        : 'Reflection Map';
 
   const currentSidebarTitle =
     activeView === 'learner'
       ? 'Stay with the dialogue'
       : activeView === 'analytics'
         ? 'Supervisory reading'
-        : activeView === 'project'
-          ? 'Research framing'
-          : 'Reflection mapping';
+        : 'Reflection mapping';
 
   const currentSidebarBody =
     activeView === 'learner'
       ? 'Use the learner workspace for live dialogue, coaching prompts, and gradual ethical reflection.'
       : activeView === 'analytics'
         ? 'Use the instructor view to inspect patterns, overrides, and regulation traces without interrupting the learner flow.'
-        : activeView === 'project'
-          ? 'Read how ETHOBOT aligns ill-structured problem solving with dilemma-based pedagogy and reflective system design.'
-          : 'Turn the current dialogue into a visual concept map, refine it, and export it for discussion.';
+        : 'Turn the current dialogue into a visual concept map, refine it, and export it for discussion.';
 
   const expandedLearnerRailWidth = `${learnerRailWidth}px`;
 
@@ -209,14 +207,10 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({ ethobot, onLogout }) => {
                 <button
                   onClick={() => {
                     logClickEvent('sidebar-open-project-overview', 'button', 'Project Overview');
-                    navigateToView('project');
+                    openProjectOverview();
                     setIsSidebarOpen(false);
                   }}
-                  className={`rounded-full px-3 py-2 text-[11px] font-bold uppercase tracking-[0.18em] transition ${
-                    activeView === 'project'
-                      ? 'bg-white text-lyceum-ink'
-                      : 'border border-white/10 bg-white/5 text-[#f5efe2]/80 hover:bg-white/10'
-                  }`}
+                  className="rounded-full border border-white/10 bg-white/5 px-3 py-2 text-[11px] font-bold uppercase tracking-[0.18em] text-[#f5efe2]/80 transition hover:bg-white/10"
                 >
                   Project Overview
                 </button>
@@ -381,13 +375,9 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({ ethobot, onLogout }) => {
                     <button
                       onClick={() => {
                         logClickEvent('account-menu-project-overview', 'button', 'Project Overview');
-                        navigateToView('project');
+                        openProjectOverview();
                       }}
-                      className={`mt-1 flex w-full items-center justify-between rounded-2xl px-4 py-3 text-left text-sm transition ${
-                        activeView === 'project'
-                          ? 'bg-lyceum-paper-deep text-lyceum-ink'
-                          : 'text-lyceum-ink-soft hover:bg-lyceum-paper-soft'
-                      }`}
+                      className="mt-1 flex w-full items-center justify-between rounded-2xl px-4 py-3 text-left text-sm text-lyceum-ink-soft transition hover:bg-lyceum-paper-soft"
                     >
                       <span className="font-semibold">Project Overview</span>
                       <span className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-lyceum-muted">Research</span>
@@ -575,19 +565,6 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({ ethobot, onLogout }) => {
               </div>
             </div>
           </section>
-        ) : activeView === 'project' ? (
-          <Suspense
-            fallback={
-              <section className="min-h-0 flex-1 overflow-y-auto px-4 py-8 sm:px-8 lg:px-12">
-                <div className="mx-auto max-w-5xl rounded-[1.5rem] border border-lyceum-line bg-white p-6 shadow-panel">
-                  <p className="text-[10px] font-extrabold uppercase tracking-[0.28em] text-lyceum-muted">Project Overview</p>
-                  <p className="mt-3 text-sm text-lyceum-muted">Loading the research overview...</p>
-                </div>
-              </section>
-            }
-          >
-            <ProjectOverviewPage onBack={() => navigateToView('learner')} onLogClick={logClickEvent} />
-          </Suspense>
         ) : (
           <Suspense
             fallback={
@@ -614,7 +591,7 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({ ethobot, onLogout }) => {
           <AboutEthobot
             isOpen={isAboutVisible}
             onClose={() => setIsAboutVisible(false)}
-            onOpenProjectOverview={() => navigateToView('project')}
+            onOpenProjectOverview={openProjectOverview}
             onLogClick={logClickEvent}
           />
         )}

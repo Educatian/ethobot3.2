@@ -133,6 +133,19 @@ const ProjectOverviewPage: React.FC<ProjectOverviewPageProps> = ({ onBack, onLog
             {copy.title}
           </h2>
           <p className="mt-5 max-w-2xl text-sm leading-7 text-lyceum-paper/76 sm:text-base">{copy.subtitle}</p>
+          <div className="mt-8 max-w-3xl">
+            <p className="text-[10px] font-extrabold uppercase tracking-[0.3em] text-lyceum-paper/52">{copy.contributors}</p>
+            <div className="mt-4 flex flex-wrap gap-3">
+              {contributors.map(contributor => (
+                <div
+                  key={contributor}
+                  className="rounded-full border border-white/14 bg-white/6 px-4 py-2 text-sm font-medium text-lyceum-paper/88 backdrop-blur"
+                >
+                  {contributor}
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
 
         <div className="grid gap-0 border-b border-lyceum-line lg:grid-cols-[1.35fr_0.95fr]">
@@ -238,19 +251,6 @@ const ProjectOverviewPage: React.FC<ProjectOverviewPageProps> = ({ onBack, onLog
           <div className="border-b border-lyceum-line bg-[#f2ebde] px-6 py-8 sm:px-10 lg:border-b-0 lg:border-r">
             <p className="text-[10px] font-extrabold uppercase tracking-[0.3em] text-lyceum-muted">{copy.note}</p>
             <p className="mt-4 max-w-2xl text-sm leading-7 text-lyceum-ink-soft">{copy.noteBody}</p>
-            <div className="mt-8 border-t border-lyceum-line/70 pt-6">
-              <p className="text-[10px] font-extrabold uppercase tracking-[0.3em] text-lyceum-muted">{copy.contributors}</p>
-              <div className="mt-4 space-y-3">
-                {contributors.map(contributor => (
-                  <div
-                    key={contributor}
-                    className="rounded-[1rem] border border-lyceum-line bg-[#fbf7ef] px-4 py-3 text-sm font-medium leading-6 text-lyceum-ink-soft"
-                  >
-                    {contributor}
-                  </div>
-                ))}
-              </div>
-            </div>
           </div>
           <div className="bg-white px-6 py-8 sm:px-10">
             <p className="text-[10px] font-extrabold uppercase tracking-[0.3em] text-lyceum-muted">{copy.sources}</p>

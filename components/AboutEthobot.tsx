@@ -18,23 +18,24 @@ const AboutEthobot: React.FC<AboutEthobotProps> = ({
   const { language } = useLanguage();
   if (!isOpen) return null;
 
-  const copy = language === 'ko'
-    ? {
-        eyebrow: 'About ETHOBOT',
-        title: 'ETHOBOT은 윤리적 딜레마를 더 천천히, 더 넓게, 더 성찰적으로 읽게 돕는 대화형 학습 공간입니다.',
-        body: '프로젝트는 AI 윤리 대화를 단순 질의응답이 아니라, 관점 비교와 정당화, 성찰이 일어나는 비구조적 문제해결 과정으로 설계합니다.',
-        chips: ['ill-structured problems', 'dilemma dialogue', 'reflective prompting'],
-        cta: '프로젝트 개요 보기',
-        foot: 'Jonassen의 비구조적 문제해결과 딜레마 기반 교수법이 ETHOBOT 안에서 어떻게 만나는지 한 페이지로 정리했습니다.',
-      }
-    : {
-        eyebrow: 'About ETHOBOT',
-        title: 'ETHOBOT is a dialogue space for reading ethical dilemmas more slowly, more widely, and more reflectively.',
-        body: 'The project treats AI ethics not as quick-answer recall, but as ill-structured problem solving supported by perspective comparison, justification, and reflective prompting.',
-        chips: ['ill-structured problems', 'dilemma dialogue', 'reflective prompting'],
-        cta: 'Open project overview',
-        foot: 'A one-page overview explains how Jonassen’s account of ill-structured problem solving can coordinate with dilemma-based pedagogy inside ETHOBOT.',
-      };
+  const copy =
+    language === 'ko'
+      ? {
+          eyebrow: 'About ETHOBOT',
+          title: 'ETHOBOT은 윤리적 딜레마를 더 천천히, 더 넓게, 더 성찰적으로 읽게 돕는 대화형 학습 공간입니다.',
+          body: '프로젝트는 AI 윤리 대화를 단순 질의응답이 아니라, 관점 비교와 정당화, 성찰이 일어나는 비구조적 문제해결 과정으로 설계합니다.',
+          chips: ['ill-structured problems', 'dilemma dialogue', 'reflective prompting'],
+          cta: '프로젝트 개요 보기',
+          foot: 'Jonassen의 비구조적 문제해결과 딜레마 기반 교수법이 ETHOBOT 안에서 어떻게 만나는지 한 페이지로 정리했습니다.',
+        }
+      : {
+          eyebrow: 'About ETHOBOT',
+          title: 'ETHOBOT is a dialogue space for reading ethical dilemmas more slowly, more widely, and more reflectively.',
+          body: 'The project treats AI ethics not as quick-answer recall, but as ill-structured problem solving supported by perspective comparison, justification, and reflective prompting.',
+          chips: ['ill-structured problems', 'dilemma dialogue', 'reflective prompting'],
+          cta: 'Open project overview',
+          foot: 'A one-page overview explains how Jonassen’s account of ill-structured problem solving can coordinate with dilemma-based pedagogy inside ETHOBOT.',
+        };
 
   return (
     <div
