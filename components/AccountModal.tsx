@@ -3,8 +3,6 @@ import { useLanguage } from '../contexts/LanguageContext';
 import { User, X, Download, BookOpen, Mail, FileText, FileJson, Camera, RotateCcw, ChevronRight } from 'lucide-react';
 import { fetchUserHistory } from '../services/loggingService';
 import { toast } from 'react-hot-toast';
-import html2canvas from 'html2canvas';
-import jsPDF from 'jspdf';
 import { Message, ProblemStage } from '../types';
 
 interface AccountModalProps {
@@ -12,7 +10,7 @@ interface AccountModalProps {
     user: { name: string; course: string; email?: string } | null;
     onClose: () => void;
     onLogout: () => void;
-    onResumeSession: (messages: Message[], stage?: ProblemStage) => void;
+    onResumeSession: (messages: Message[], stage?: ProblemStage) => void | Promise<void>;
     onLogClick: (elementId: string, elementTag: string, textContent: string | null) => void;
 }
 
@@ -24,7 +22,7 @@ const AccountModal: React.FC<AccountModalProps> = ({ isOpen, user, onClose, onLo
 
     useEffect(() => {
         const loadHistory = async () => {
-            if (!user) return;
+            if (!isOpen || !user) return;
             setIsLoadingHistory(true);
             try {
                 const data = await fetchUserHistory();
@@ -36,7 +34,7 @@ const AccountModal: React.FC<AccountModalProps> = ({ isOpen, user, onClose, onLo
             }
         };
         loadHistory();
-    }, [user]);
+    }, [isOpen, user]);
 
     const downloadFile = (content: string, fileName: string, contentType: string) => {
         const a = document.createElement("a");
@@ -80,6 +78,11 @@ const AccountModal: React.FC<AccountModalProps> = ({ isOpen, user, onClose, onLo
         const toastId = toast.loading("Capturing chat...");
 
         try {
+            const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([
+                import('html2canvas'),
+                import('jspdf'),
+            ]);
+
             // Expand the container temporarily to capture everything if needed, 
             // or just capture the current view.
             const canvas = await html2canvas(chatElement, {

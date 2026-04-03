@@ -11,6 +11,8 @@
   "dependencies": {
     "@google/genai": "^1.19.0",
     "@supabase/supabase-js": "^2.89.0",
+    "@types/d3": "^7.4.3",
+    "d3": "^7.9.0",
     "html2canvas": "^1.4.1",
     "jspdf": "^3.0.4",
     "lucide-react": "^0.562.0",

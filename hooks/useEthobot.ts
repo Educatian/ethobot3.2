@@ -1,12 +1,37 @@
 
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { supabase } from '../services/supabaseClient';
-import type { User, Message, ProblemStage, LogEventType } from '../types';
+import { isSupabaseConfigured, supabase } from '../services/supabaseClient';
+import type {
+  User,
+  Message,
+  ProblemStage,
+  LogEventType,
+  ReasoningAnalyticsSnapshot,
+  PedagogicalMove,
+  HumanReasoningAnnotation,
+  ReviewedCalibrationCorpusEntry,
+  ReviewedCalibrationProfile,
+  ReasoningState,
+  DiscourseStrategy,
+} from '../types';
 import { STAGES, getInitialBotMessage } from '../constants';
 import * as loggingService from '../services/loggingService';
 import { toast } from 'react-hot-toast';
 // FIX: Import geminiService to resolve "Cannot find name 'geminiService'" errors.
 import * as geminiService from '../services/geminiService';
+import {
+  analyzeLearnerTurn,
+  createEmptyReasoningAnalyticsSnapshot,
+  applyInstructorOverride,
+  buildReviewedCalibrationProfile,
+  isReviewedCalibrationProfile,
+  mapReasoningStateToProblemStage,
+  mergeReviewedCalibrationProfiles,
+  rebuildReasoningAnalytics,
+} from '../services/reasoningAnalyticsService';
+
+const getReviewedCorpusStorageKey = (language: string) => `ethobot_reviewed_corpus_${language}`;
+const getImportedReviewedProfileStorageKey = (language: string) => `ethobot_imported_reviewed_profile_${language}`;
 
 export const useEthobot = (language: string) => {
   const [user, setUser] = useState<User | null>(null);
@@ -14,14 +39,31 @@ export const useEthobot = (language: string) => {
   const [currentStage, setCurrentStage] = useState<ProblemStage>(STAGES[0]);
   const [isLoading, setIsLoading] = useState(false);
   const [isChatReady, setIsChatReady] = useState(false);
+  const [reasoningAnalytics, setReasoningAnalytics] = useState<ReasoningAnalyticsSnapshot>(createEmptyReasoningAnalyticsSnapshot());
+  const [queuedInstructorOverride, setQueuedInstructorOverride] = useState<PedagogicalMove | null>(null);
+  const [reasoningAnnotations, setReasoningAnnotations] = useState<Record<string, HumanReasoningAnnotation>>({});
+  const [reviewedCalibrationCorpus, setReviewedCalibrationCorpus] = useState<Record<string, ReviewedCalibrationCorpusEntry>>({});
+  const [importedReviewedCalibrationProfile, setImportedReviewedCalibrationProfile] = useState<ReviewedCalibrationProfile | null>(null);
+  const localReviewedCalibrationProfile = useMemo<ReviewedCalibrationProfile | null>(
+    () => buildReviewedCalibrationProfile(Object.values(reviewedCalibrationCorpus)),
+    [reviewedCalibrationCorpus]
+  );
+  const reviewedCalibrationProfile = useMemo<ReviewedCalibrationProfile | null>(
+    () => mergeReviewedCalibrationProfiles(localReviewedCalibrationProfile, importedReviewedCalibrationProfile),
+    [localReviewedCalibrationProfile, importedReviewedCalibrationProfile]
+  );
 
   // Refs for robust logging
   const userRef = useRef<User | null>(null);
   userRef.current = user;
   const sessionStartTimeRef = useRef<number | null>(null);
+  const reasoningAnalyticsRef = useRef<ReasoningAnalyticsSnapshot>(createEmptyReasoningAnalyticsSnapshot());
+  reasoningAnalyticsRef.current = reasoningAnalytics;
+  const reviewedCorpusLoadedRef = useRef(false);
 
   // Gemini Initialization effect
   useEffect(() => {
+    reviewedCorpusLoadedRef.current = false;
     setIsChatReady(false);
     toast.loading('Initializing AI assistant...', { id: 'init-toast' });
     geminiService.initializeChat(language).then(success => {
@@ -34,10 +76,104 @@ export const useEthobot = (language: string) => {
     });
     // When language changes, reset the chat with the new welcome message
     setMessages([getInitialBotMessage(language)]);
+    setCurrentStage(STAGES[0]);
+    setReasoningAnalytics(createEmptyReasoningAnalyticsSnapshot());
+    setQueuedInstructorOverride(null);
+    setReasoningAnnotations({});
+    try {
+      const storedCorpus = localStorage.getItem(getReviewedCorpusStorageKey(language));
+      setReviewedCalibrationCorpus(storedCorpus ? JSON.parse(storedCorpus) : {});
+    } catch (error) {
+      console.warn('Unable to restore reviewed calibration corpus.', error);
+      setReviewedCalibrationCorpus({});
+    }
+    try {
+      const storedProfile = localStorage.getItem(getImportedReviewedProfileStorageKey(language));
+      if (!storedProfile) {
+        setImportedReviewedCalibrationProfile(null);
+      } else {
+        const parsedProfile = JSON.parse(storedProfile);
+        setImportedReviewedCalibrationProfile(isReviewedCalibrationProfile(parsedProfile) ? (parsedProfile.profile || parsedProfile) : null);
+      }
+    } catch (error) {
+      console.warn('Unable to restore imported reviewed profile.', error);
+      setImportedReviewedCalibrationProfile(null);
+    }
+    reviewedCorpusLoadedRef.current = true;
   }, [language]); // Re-initialize when language changes
+
+  useEffect(() => {
+    if (!reviewedCorpusLoadedRef.current) {
+      return;
+    }
+    try {
+      localStorage.setItem(
+        getReviewedCorpusStorageKey(language),
+        JSON.stringify(reviewedCalibrationCorpus)
+      );
+    } catch (error) {
+      console.warn('Unable to persist reviewed calibration corpus.', error);
+    }
+  }, [language, reviewedCalibrationCorpus]);
+
+  useEffect(() => {
+    if (!reviewedCorpusLoadedRef.current) {
+      return;
+    }
+    try {
+      if (importedReviewedCalibrationProfile) {
+        localStorage.setItem(
+          getImportedReviewedProfileStorageKey(language),
+          JSON.stringify(importedReviewedCalibrationProfile)
+        );
+      } else {
+        localStorage.removeItem(getImportedReviewedProfileStorageKey(language));
+      }
+    } catch (error) {
+      console.warn('Unable to persist imported reviewed profile.', error);
+    }
+  }, [language, importedReviewedCalibrationProfile]);
+
+  useEffect(() => {
+    const learnerMessages = messages.filter(message => message.sender === 'user');
+    if (!isChatReady || learnerMessages.length === 0) {
+      return;
+    }
+
+    let cancelled = false;
+    rebuildReasoningAnalytics(messages, reasoningAnnotations, reviewedCalibrationProfile)
+      .then(rebuiltAnalytics => {
+        if (!cancelled) {
+          setReasoningAnalytics(rebuiltAnalytics);
+          setCurrentStage(mapReasoningStateToProblemStage(rebuiltAnalytics.currentLearnerState));
+        }
+      })
+      .catch(error => {
+        console.warn('Unable to rebuild analytics after reviewed profile change.', error);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isChatReady, messages, reasoningAnnotations, reviewedCalibrationProfile]);
 
   // Load user and set up session logger
   useEffect(() => {
+    if (!isSupabaseConfigured) {
+      try {
+        const storedUser = localStorage.getItem('ethobot_user');
+        if (storedUser) {
+          const parsedUser = JSON.parse(storedUser) as User;
+          setUser(parsedUser);
+          loggingService.startSession(parsedUser);
+          sessionStartTimeRef.current = Date.now();
+        }
+      } catch (error) {
+        console.warn('Unable to restore local user session.', error);
+      }
+      return;
+    }
+
     const syncUser = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session && session.user) {
@@ -117,14 +253,106 @@ export const useEthobot = (language: string) => {
     sessionStartTimeRef.current = Date.now();
   };
 
-  const resumeSession = (historicalMessages: Message[], stage?: ProblemStage) => {
+  const resumeSession = async (historicalMessages: Message[], stage?: ProblemStage) => {
     setMessages(historicalMessages);
     setIsChatReady(true);
-    if (stage) {
-      setCurrentStage(stage);
-    }
+    const rebuiltAnalytics = await rebuildReasoningAnalytics(
+      historicalMessages,
+      reasoningAnnotations,
+      reviewedCalibrationProfile
+    );
+    setReasoningAnalytics(rebuiltAnalytics);
+    setQueuedInstructorOverride(null);
+    setReasoningAnnotations({});
+    setCurrentStage(stage || mapReasoningStateToProblemStage(rebuiltAnalytics.currentLearnerState));
     toast.success("Session resumed!");
   };
+
+  const queueInstructorOverride = useCallback((move: PedagogicalMove) => {
+    setQueuedInstructorOverride(move);
+    toast.success(`Instructor override queued for the next adaptive turn: ${move}`);
+  }, []);
+
+  const clearInstructorOverride = useCallback(() => {
+    setQueuedInstructorOverride(null);
+  }, []);
+
+  const importReviewedCalibrationProfile = useCallback((payload: unknown) => {
+    if (!isReviewedCalibrationProfile(payload)) {
+      toast.error('The selected file is not a valid reviewed profile artifact.');
+      return false;
+    }
+
+    const normalizedProfile = ((payload as { profile?: ReviewedCalibrationProfile }).profile ||
+      payload) as ReviewedCalibrationProfile;
+    setImportedReviewedCalibrationProfile(normalizedProfile);
+    toast.success(`Reviewed profile imported: ${normalizedProfile.providerLabel}`);
+    return true;
+  }, []);
+
+  const clearImportedReviewedCalibrationProfile = useCallback(() => {
+    setImportedReviewedCalibrationProfile(null);
+    toast.success('Imported reviewed profile cleared.');
+  }, []);
+
+  const saveReasoningAnnotation = useCallback((
+    messageId: string,
+    annotation: {
+      annotatedState: ReasoningState | null;
+      annotatedStrategy: DiscourseStrategy | null;
+      annotatedMove: PedagogicalMove | null;
+      reviewDecision: HumanReasoningAnnotation['reviewDecision'];
+      reviewerNotes: string;
+    }
+  ) => {
+    const reviewedAt = new Date().toISOString();
+    setReasoningAnnotations(prev => ({
+      ...prev,
+      [messageId]: {
+        messageId,
+        ...annotation,
+        reviewedAt,
+      },
+    }));
+    const sourceMessage = messages.find(message => message.id === messageId && message.sender === 'user');
+    if (sourceMessage) {
+      setReviewedCalibrationCorpus(prev => ({
+        ...prev,
+        [messageId]: {
+          messageId,
+          text: sourceMessage.text,
+          annotatedState: annotation.annotatedState,
+          annotatedStrategy: annotation.annotatedStrategy,
+          annotatedMove: annotation.annotatedMove,
+          reviewDecision: annotation.reviewDecision,
+          reviewedAt,
+        },
+      }));
+    }
+    toast.success('Reasoning review saved.');
+  }, [messages]);
+
+  const clearReasoningAnnotation = useCallback((messageId: string) => {
+    setReasoningAnnotations(prev => {
+      if (!prev[messageId]) {
+        return prev;
+      }
+
+      const nextAnnotations = { ...prev };
+      delete nextAnnotations[messageId];
+      return nextAnnotations;
+    });
+    setReviewedCalibrationCorpus(prev => {
+      if (!prev[messageId]) {
+        return prev;
+      }
+
+      const nextCorpus = { ...prev };
+      delete nextCorpus[messageId];
+      return nextCorpus;
+    });
+    toast.success('Reasoning review cleared.');
+  }, []);
 
   const sendMessage = useCallback(async (text: string, fromChoiceButton: boolean = false) => {
     if (isLoading || !isChatReady) {
@@ -137,7 +365,7 @@ export const useEthobot = (language: string) => {
     if (fromChoiceButton) {
       loggingService.addLog('CHOICE_SELECTED' as LogEventType.CHOICE_SELECTED, { choiceText: text });
       if (user) {
-        loggingService.logClickEvent(user.name, user.course, 'CHOICE_SELECTED', { choiceText: text }, sessionStartTimeRef.current);
+        loggingService.queueClickEventLog(user.name, user.course, 'CHOICE_SELECTED', { choiceText: text }, sessionStartTimeRef.current);
       }
     }
 
@@ -165,7 +393,23 @@ export const useEthobot = (language: string) => {
     setMessages(prev => [...prev, botMessagePlaceholder]);
 
     try {
-      const stream = geminiService.streamChat(text, messages.slice(1));
+      const nextAnalytics = await analyzeLearnerTurn(
+        userMessage,
+        reasoningAnalyticsRef.current,
+        messages,
+        reasoningAnnotations,
+        reviewedCalibrationProfile
+      );
+      const effectiveAnalytics = queuedInstructorOverride
+        ? applyInstructorOverride(nextAnalytics, queuedInstructorOverride)
+        : nextAnalytics;
+      setReasoningAnalytics(effectiveAnalytics);
+      setCurrentStage(mapReasoningStateToProblemStage(effectiveAnalytics.currentLearnerState));
+      if (queuedInstructorOverride) {
+        setQueuedInstructorOverride(null);
+      }
+
+      const stream = geminiService.streamChat(text, messages.slice(1), effectiveAnalytics.currentMovePlan || undefined);
 
       let fullResponse = '';
       for await (const chunk of stream) {
@@ -185,11 +429,27 @@ export const useEthobot = (language: string) => {
       loggingService.addLog('MESSAGE_EXCHANGE' as LogEventType.MESSAGE_EXCHANGE, {
         user: userMessage.text,
         bot: finalBotMessage.text,
-        stage: currentStage
+        stage: mapReasoningStateToProblemStage(effectiveAnalytics.currentLearnerState),
+        reasoningAnalytics: {
+          state: effectiveAnalytics.currentLearnerState,
+          strategy: effectiveAnalytics.currentLearnerStrategy,
+          discourseFunction: effectiveAnalytics.analyses[effectiveAnalytics.analyses.length - 1]?.discourseFunction,
+          regulatoryStatus: effectiveAnalytics.regulatoryStatus,
+          transitionEntropy: effectiveAnalytics.transitionEntropy,
+          averageCoherence: effectiveAnalytics.averageCoherence,
+          cdoi: effectiveAnalytics.latestCDOI,
+          selectedMoves: effectiveAnalytics.currentMovePlan
+            ? [
+                effectiveAnalytics.currentMovePlan.primaryMove,
+                ...(effectiveAnalytics.currentMovePlan.secondaryMove ? [effectiveAnalytics.currentMovePlan.secondaryMove] : []),
+              ]
+            : [],
+          instructorOverrideApplied: queuedInstructorOverride,
+        }
       });
 
       if (user) {
-        await loggingService.logUserInteraction(user.name, user.course, userMessage.text, finalBotMessage.text);
+        loggingService.queueUserInteractionLog(user.name, user.course, userMessage.text, finalBotMessage.text);
 
         const logObj = {
           logType: 'MESSAGE_EXCHANGE',
@@ -197,9 +457,25 @@ export const useEthobot = (language: string) => {
           userCourse: user.course,
           userMessage: userMessage.text,
           botResponse: finalBotMessage.text,
-          details_json: { sessionId: sessionStartTimeRef.current }
+          details_json: {
+            sessionId: sessionStartTimeRef.current,
+            reasoningState: effectiveAnalytics.currentLearnerState,
+            discourseStrategy: effectiveAnalytics.currentLearnerStrategy,
+            discourseFunction: effectiveAnalytics.analyses[effectiveAnalytics.analyses.length - 1]?.discourseFunction,
+            regulatoryStatus: effectiveAnalytics.regulatoryStatus,
+            transitionEntropy: effectiveAnalytics.transitionEntropy,
+            coherence: effectiveAnalytics.averageCoherence,
+            cdoi: effectiveAnalytics.latestCDOI,
+            selectedMoves: effectiveAnalytics.currentMovePlan
+              ? [
+                  effectiveAnalytics.currentMovePlan.primaryMove,
+                  ...(effectiveAnalytics.currentMovePlan.secondaryMove ? [effectiveAnalytics.currentMovePlan.secondaryMove] : []),
+                ]
+              : [],
+            instructorOverrideApplied: queuedInstructorOverride,
+          }
         };
-        await loggingService.logToGoogleSheet(logObj);
+        loggingService.queueGoogleSheetLog(logObj);
       }
 
     } catch (error) {
@@ -215,7 +491,7 @@ export const useEthobot = (language: string) => {
     } finally {
       setIsLoading(false);
     }
-  }, [isLoading, messages, currentStage, isChatReady, user]);
+  }, [isLoading, messages, isChatReady, user, logClickEvent, queuedInstructorOverride, reasoningAnnotations, reviewedCalibrationProfile]);
 
   const downloadData = loggingService.downloadSessionData;
 
@@ -230,6 +506,18 @@ export const useEthobot = (language: string) => {
     downloadData,
     logClickEvent,
     resumeSession,
+    reasoningAnalytics,
+    reasoningAnnotations,
+    localReviewedCalibrationProfile,
+    importedReviewedCalibrationProfile,
+    reviewedCalibrationProfile,
+    queuedInstructorOverride,
+    queueInstructorOverride,
+    clearInstructorOverride,
+    saveReasoningAnnotation,
+    clearReasoningAnnotation,
+    importReviewedCalibrationProfile,
+    clearImportedReviewedCalibrationProfile,
   };
 };
 

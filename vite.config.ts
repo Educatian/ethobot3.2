@@ -18,6 +18,30 @@ export default defineConfig(({ mode }) => {
         alias: {
           '@': path.resolve(__dirname, '.'),
         }
+      },
+      build: {
+        rollupOptions: {
+          output: {
+            manualChunks(id) {
+              if (id.includes('@google/genai')) {
+                return 'google-genai';
+              }
+              if (id.includes('@supabase/supabase-js')) {
+                return 'supabase';
+              }
+              if (id.includes('jspdf') || id.includes('html2canvas')) {
+                return 'pdf-export';
+              }
+              if (id.includes('lucide-react')) {
+                return 'icons';
+              }
+              if (id.includes('react-hot-toast')) {
+                return 'toast';
+              }
+              return undefined;
+            }
+          }
+        }
       }
     };
 });

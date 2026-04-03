@@ -9,7 +9,7 @@ export const LogoIcon = (props: React.SVGProps<SVGSVGElement>) => (
 
 export const AppLogo = ({ className = "" }: { className?: string }) => (
     <img 
-        src="/ethobot_logo.jpg" 
+        src="/ethobot_mark.svg" 
         alt="Ethobot Logo" 
         className={`object-contain ${className}`} 
     />

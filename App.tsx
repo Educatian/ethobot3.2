@@ -6,7 +6,7 @@ import SessionRecoveryModal from './components/SessionRecoveryModal';
 import { Toaster, toast } from 'react-hot-toast';
 import { clearLocalSession } from './services/loggingService';
 import { useLanguage } from './contexts/LanguageContext';
-import { supabase } from './services/supabaseClient';
+import { isSupabaseConfigured, supabase } from './services/supabaseClient';
 import { Session } from '@supabase/supabase-js';
 
 const App: React.FC = () => {
@@ -15,6 +15,11 @@ const App: React.FC = () => {
   const { language, t } = useLanguage();
 
   useEffect(() => {
+    if (!isSupabaseConfigured) {
+      setCheckingSession(false);
+      return;
+    }
+
     // Check active sessions and sets the listener
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
@@ -36,10 +41,14 @@ const App: React.FC = () => {
   };
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
+    if (isSupabaseConfigured) {
+      await supabase.auth.signOut();
+    }
     clearLocalSession();
     window.location.reload();
   };
+
+  const isAccessGranted = Boolean(session) || ethobot.isUserActivated;
 
   if (checkingSession) {
     return (
@@ -51,7 +60,7 @@ const App: React.FC = () => {
 
   return (
     <div className="font-sans bg-gray-50 text-gray-800">
-      {!session ? (
+      {!isAccessGranted ? (
         <ActivationModal onActivate={handleActivate} onLogClick={ethobot.logClickEvent} />
       ) : (
         <ChatLayout ethobot={ethobot} onLogout={handleLogout} />

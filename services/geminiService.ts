@@ -1,7 +1,6 @@
 
 
-import { GoogleGenAI, Chat } from "@google/genai";
-import type { Message, KnowledgeSource, Challenge } from "../types";
+import type { Message, KnowledgeSource, Challenge, PedagogicalMovePlan } from "../types";
 
 const SYSTEM_INSTRUCTION_TEMPLATE = `You are ETHOBOT, a curious and encouraging AI Ethics mentor.
 Your purpose is to guide students as they explore the complex ethics of facial recognition technology. Think of yourself as a friendly guide, not just an answer machine.
@@ -46,7 +45,27 @@ You MUST respond in {LANGUAGE_NAME}.
     *   **Example Reflective Pause (after a knowledge card):** Prompt: "Let's digest that. Which reflection is closest to your own?" Choices: "[CHOICE:This connects to other biases I've heard about.] [CHOICE:I'm surprised that the data, not just the code, can be biased.] [CHOICE:I'm now thinking about where else this bias might show up in my life.]"
     *   After the student selects a reflective choice, provide a brief, encouraging response that **elaborates on that line of thinking**, validating their reflection and adding a small piece of insight. Then, transition back to the main conversation flow. For instance, if they choose "I'm surprised that the data, not just the code, can be biased.", you could respond with: "That's a crucial insight. It highlights that ethical issues in AI aren't always about deliberate harm. This is why data diversity and auditing are so important. Now, thinking about that, how might this unintentional bias affect a real-world application like campus security?"`;
 
-let chat: Chat | null = null;
+let GoogleGenAiCtor: any | null | undefined;
+let googleGenAiPromise: Promise<any | null> | null = null;
+let chat: { sendMessageStream: (args: { message: string }) => Promise<AsyncIterable<{ text?: string }>> } | null = null;
+
+const loadGoogleGenAiCtor = async () => {
+    if (GoogleGenAiCtor !== undefined) {
+        return GoogleGenAiCtor;
+    }
+
+    if (!googleGenAiPromise) {
+        googleGenAiPromise = import('@google/genai')
+            .then(module => module.GoogleGenAI)
+            .catch(error => {
+                console.error('Failed to lazy-load @google/genai for chat.', error);
+                return null;
+            });
+    }
+
+    GoogleGenAiCtor = await googleGenAiPromise;
+    return GoogleGenAiCtor;
+};
 
 export const isChatInitialized = (): boolean => !!chat;
 
@@ -54,6 +73,12 @@ export const initializeChat = async (language: string): Promise<boolean> => {
     // We re-initialize on language change, so set chat to null.
     chat = null;
     try {
+        const GoogleGenAI = await loadGoogleGenAiCtor();
+        if (!GoogleGenAI || !import.meta.env.VITE_GEMINI_API_KEY) {
+            console.error("Gemini client could not be loaded or API key is missing.");
+            return false;
+        }
+
         // Fetch knowledge and challenge data to get valid IDs for the prompt
         const [knowledgeRes, challengesRes] = await Promise.all([
             fetch('/data/knowledge_base.json'),
@@ -77,9 +102,7 @@ export const initializeChat = async (language: string): Promise<boolean> => {
             .replace('{CHALLENGE_IDS}', validChallengeIds)
             .replace('{LANGUAGE_NAME}', languageName);
 
-        const ai = new GoogleGenAI({
-            apiKey: import.meta.env.VITE_GEMINI_API_KEY,
-        });
+        const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
 
         chat = ai.chats.create({
             model: 'gemini-2.0-flash',
@@ -96,12 +119,32 @@ export const initializeChat = async (language: string): Promise<boolean> => {
     }
 };
 
-export async function* streamChat(message: string, history: Message[]) {
+const composePedagogicalMessage = (message: string, movePlan?: PedagogicalMovePlan) => {
+    if (!movePlan) {
+        return message;
+    }
+
+    const secondaryMoveLine = movePlan.secondaryMove ? `Secondary move: ${movePlan.secondaryMove}` : '';
+    const directives = movePlan.instructionDirectives.map(item => `- ${item}`).join('\n');
+
+    return `[Internal pedagogical plan - do not reveal or quote]
+Primary move: ${movePlan.primaryMove}
+${secondaryMoveLine}
+Rationale: ${movePlan.rationale}
+Instructional directives:
+${directives}
+[End internal plan]
+
+Learner message:
+${message}`;
+};
+
+export async function* streamChat(message: string, history: Message[], movePlan?: PedagogicalMovePlan) {
     if (!chat) {
         throw new Error("Chat is not initialized. Call initializeChat first.");
     }
     try {
-        const result = await chat.sendMessageStream({ message });
+        const result = await chat.sendMessageStream({ message: composePedagogicalMessage(message, movePlan) });
         for await (const chunk of result) {
             yield chunk.text;
         }

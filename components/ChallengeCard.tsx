@@ -5,7 +5,7 @@ import { DilemmaIcon, CheckCircleIcon } from './icons';
 
 interface ChallengeCardProps {
   challenge: Challenge;
-  onSendMessage: (text: string, fromChoiceButton: boolean) => void;
+  onSendMessage: (text: string, fromChoiceButton: boolean) => void | Promise<void>;
 }
 
 const ChallengeCard: React.FC<ChallengeCardProps> = ({ challenge, onSendMessage }) => {
@@ -20,29 +20,29 @@ const ChallengeCard: React.FC<ChallengeCardProps> = ({ challenge, onSendMessage 
   };
 
   const getButtonClass = (index: number) => {
-    let baseClass = 'w-full text-left bg-white border text-gray-700 px-4 py-2 rounded-md transition-colors flex items-center justify-between';
+    const baseClass = 'flex w-full items-center justify-between rounded-2xl border px-4 py-3 text-left transition-colors';
 
     if (!isCompleted) {
-      return `${baseClass} border-gray-300 hover:bg-gray-50 hover:border-alabama-crimson`;
+      return `${baseClass} border-lyceum-line bg-white text-lyceum-ink hover:border-lyceum-accent hover:bg-lyceum-paper-soft`;
     }
 
     if (selectedOption === index) {
-      return `${baseClass} border-alabama-crimson bg-crimson-light/50 ring-2 ring-alabama-crimson/50 cursor-not-allowed`;
+      return `${baseClass} cursor-not-allowed border-lyceum-accent bg-lyceum-accent-soft ring-2 ring-lyceum-accent/20`;
     }
 
-    return `${baseClass} border-gray-200 bg-gray-50 text-gray-500 cursor-not-allowed`;
+    return `${baseClass} cursor-not-allowed border-lyceum-line bg-[#f3efe6] text-lyceum-muted`;
   };
 
   return (
-    <div className="mt-4 mb-2 border border-alabama-crimson/30 bg-crimson-light/50 rounded-lg p-4 text-gray-800">
-      <div className="flex items-center mb-3">
-        <DilemmaIcon className="h-6 w-6 text-alabama-crimson mr-3" />
+    <div className="mb-2 mt-5 rounded-[1.5rem] border border-lyceum-accent/20 bg-[#fff6ee] p-5 text-lyceum-ink shadow-sm">
+      <div className="mb-4 flex items-center">
+        <DilemmaIcon className="mr-3 h-6 w-6 text-lyceum-accent" />
         <div>
-          <p className="text-xs font-semibold uppercase text-alabama-crimson">{challenge.type}</p>
-          <h4 className="font-bold text-gray-900">{challenge.title}</h4>
+          <p className="text-[10px] font-extrabold uppercase tracking-[0.24em] text-lyceum-accent">{challenge.type}</p>
+          <h4 className="font-headline text-2xl font-bold tracking-tight text-lyceum-ink">{challenge.title}</h4>
         </div>
       </div>
-      <p className="text-sm text-gray-700 mb-4">{challenge.description}</p>
+      <p className="mb-4 text-sm leading-7 text-lyceum-ink">{challenge.description}</p>
       <div className="flex flex-col space-y-2">
         {challenge.options.map((option, index) => (
           <div key={index}>
@@ -53,11 +53,11 @@ const ChallengeCard: React.FC<ChallengeCardProps> = ({ challenge, onSendMessage 
               title={isCompleted ? "You have already submitted a response" : "Select this option to submit your response"}
             >
               <span>{option.text}</span>
-              {selectedOption === index && <CheckCircleIcon className="h-5 w-5 text-alabama-crimson" />}
+              {selectedOption === index && <CheckCircleIcon className="h-5 w-5 text-lyceum-accent" />}
             </button>
             {selectedOption === index && option.feedback && (
-              <div className="mt-[-1px] p-3 pt-4 bg-white/80 rounded-b-md text-sm text-gray-800 border-l border-r border-b border-alabama-crimson/50">
-                <p className="font-semibold text-alabama-crimson">Feedback</p>
+              <div className="mt-[-1px] rounded-b-2xl border-b border-l border-r border-lyceum-accent/35 bg-white px-4 pb-4 pt-4 text-sm text-lyceum-ink">
+                <p className="font-semibold text-lyceum-accent">Feedback</p>
                 <p className="mt-1">{option.feedback}</p>
               </div>
             )}

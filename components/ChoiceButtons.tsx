@@ -16,19 +16,19 @@ const ChoiceButtons: React.FC<ChoiceButtonsProps> = ({ choices, onSelect }) => {
   };
 
   return (
-    <div className="mt-2 flex flex-wrap gap-2">
+    <div className="mt-3 flex flex-wrap gap-2.5">
       {choices.map((choice, index) => (
         <button
           key={index}
           onClick={() => handleSelect(choice)}
           disabled={isCompleted}
-          className={`flex items-center text-sm bg-white border text-gray-700 px-3 py-1.5 rounded-full transition-colors ${
+          className={`flex items-center rounded-full border px-4 py-2 text-sm font-medium transition-colors ${
             isCompleted
-              ? 'border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed'
-              : 'border-gray-300 hover:bg-gray-50 hover:border-alabama-crimson hover:text-alabama-crimson'
+              ? 'cursor-not-allowed border-lyceum-line bg-[#f1ece0] text-lyceum-muted'
+              : 'border-lyceum-line bg-white text-lyceum-ink hover:border-lyceum-accent hover:bg-lyceum-paper-soft hover:text-lyceum-accent'
           }`}
         >
-          <ChoiceIcon className="h-4 w-4 mr-2" />
+          <ChoiceIcon className="mr-2 h-4 w-4" />
           {choice}
         </button>
       ))}

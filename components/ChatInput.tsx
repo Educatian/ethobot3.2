@@ -3,7 +3,7 @@ import { SendIcon } from './icons';
 import { useLanguage } from '../contexts/LanguageContext';
 
 interface ChatInputProps {
-  onSend: (text: string) => void;
+  onSend: (text: string) => void | Promise<void>;
   isLoading: boolean;
   onLogClick: (elementId: string, elementTag: string, textContent: string | null) => void;
 }
@@ -21,14 +21,14 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSend, isLoading, onLogClick }) 
   };
 
   return (
-    <div className="border-t border-gray-200 p-3 sm:p-4 bg-white">
-      <form onSubmit={handleSubmit} className="flex items-center space-x-2 sm:space-x-4">
+    <div className="flex-shrink-0 border-t border-lyceum-line/70 bg-lyceum-paper/90 px-4 py-4 backdrop-blur sm:px-8">
+      <form onSubmit={handleSubmit} className="mx-auto flex max-w-5xl items-center gap-3 sm:gap-5">
         <input
           type="text"
           value={text}
           onChange={(e) => setText(e.target.value)}
           placeholder={t('inputPlaceholder')}
-          className="flex-1 px-4 py-2 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-alabama-crimson"
+          className="h-14 flex-1 rounded-full border border-lyceum-line bg-white/90 px-6 text-sm text-lyceum-ink shadow-inner outline-none transition focus:border-lyceum-accent focus:ring-2 focus:ring-lyceum-accent/20"
           disabled={isLoading}
         />
         <button
@@ -36,7 +36,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSend, isLoading, onLogClick }) 
           type="submit"
           disabled={isLoading || !text.trim()}
           onClick={(e) => onLogClick('send-message-button', 'button', e.currentTarget.textContent)}
-          className="p-3 rounded-full bg-alabama-crimson text-white hover:bg-crimson-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-alabama-crimson disabled:bg-gray-400 disabled:cursor-not-allowed"
+          className="flex h-14 w-14 items-center justify-center rounded-full bg-lyceum-ink text-white shadow-ambient transition hover:bg-lyceum-ink-soft focus:outline-none focus:ring-2 focus:ring-lyceum-accent/30 focus:ring-offset-2 focus:ring-offset-lyceum-paper disabled:cursor-not-allowed disabled:bg-lyceum-muted"
           title="Send your message to Ethobot"
         >
           {isLoading ? (

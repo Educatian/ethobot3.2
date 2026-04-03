@@ -1,12 +1,11 @@
-
-
 export type Language = 'en' | 'ko';
 
 const translations = {
   en: {
     sessionActivated: 'Session activated successfully!',
     welcomeToEthobot: 'Welcome to ETHOBOT',
-    assistantPrompt: 'Your personal assistant for AI Ethics, focused on Facial Recognition. To begin, please enter your name and course number.',
+    assistantPrompt:
+      'Your personal AI ethics guide. To begin, enter your name and course number.',
     fullNameLabel: 'Full Name',
     fullNamePlaceholder: 'e.g., Jane Doe',
     courseNumberLabel: 'Course Number',
@@ -28,24 +27,32 @@ const translations = {
     you: 'You',
     inputPlaceholder: 'Type your message here...',
     welcomeBack: 'Welcome Back!',
-    sessionRecoveryPrompt: 'We found an existing session. Would you like to continue where you left off or start a new session?',
+    sessionRecoveryPrompt:
+      'We found an existing session. Would you like to continue where you left off or start a new session?',
     startNewWarning: 'Starting a new session will clear your previous progress.',
     startNewSessionButton: 'Start New Session',
     continueSessionButton: 'Continue Session',
     aboutTitle: 'About ETHOBOT',
     aboutSubtitle: 'AI Ethics Education Assistant',
     purposeAndModel: 'Purpose & Pedagogical Model',
-    purposeText: 'ETHOBOT is an AI-powered chatbot designed to help students explore complex topics in AI ethics. The chatbot is built on Google\'s Gemini model and guided by a pedagogical framework that emphasizes critical thinking and structured problem-solving. This framework includes:',
-    pedagogy1: 'Give-then-Guide Pedagogy: Provides a concise piece of information and follows up with a Socratic question to stimulate deeper thought.',
-    pedagogy2: 'Problem-Solving Stages: Structures conversations along Jonassen’s stages (Problem Definition, Solution Exploration, Implementation, Reflection).',
-    pedagogy3: 'Interactive Learning: Uses interactive challenges, real-world case studies, and knowledge resources to make learning engaging.',
+    purposeText:
+      "ETHOBOT is an AI-powered chatbot designed to help students explore complex topics in AI ethics. The chatbot is built on Google's Gemini model and guided by a pedagogical framework that emphasizes critical thinking and structured problem-solving. This framework includes:",
+    pedagogy1:
+      'Give-then-Guide Pedagogy: Provides a concise piece of information and follows up with a Socratic question to stimulate deeper thought.',
+    pedagogy2:
+      'Problem-Solving Stages: Structures conversations along Jonassen’s stages (Problem Definition, Solution Exploration, Implementation, Reflection).',
+    pedagogy3:
+      'Interactive Learning: Uses interactive challenges, real-world case studies, and knowledge resources to make learning engaging.',
     keyFeatures: 'Key Features',
     feature1: 'Interactive Chat: Engage in a dynamic, guided conversation about AI ethics.',
-    feature2: 'Structured Learning Path: Progress through defined stages of problem-solving for a comprehensive learning experience.',
-    feature3: 'Challenges & Case Studies: Apply your knowledge to practical ethical dilemmas and scenarios.',
+    feature2:
+      'Structured Learning Path: Progress through defined stages of problem-solving for a comprehensive learning experience.',
+    feature3:
+      'Challenges & Case Studies: Apply your knowledge to practical ethical dilemmas and scenarios.',
     feature4: 'Gamification: Earn points and badges for completing challenges and making progress.',
     privacyAndSecurity: 'Privacy & Data Security',
-    privacyText: 'Your privacy is important. The conversation, your name, and course number are logged for educational research purposes. Authentication is managed securely through Supabase.',
+    privacyText:
+      'Your privacy is important. Conversation content, your name, and your course number may be logged for educational research purposes. Authentication is managed securely through Supabase.',
     signOut: 'Sign Out',
     signIn: 'Sign In',
     signUp: 'Sign Up',
@@ -70,12 +77,14 @@ const translations = {
     resumeChat: 'Resume Chat',
     pastSessions: 'Your Past Sessions',
     noPastSessions: 'No past sessions found.',
-    resumeConfirm: 'Are you sure you want to resume this session? Current progress will be lost.',
+    resumeConfirm:
+      'Are you sure you want to resume this session? Current progress will be lost.',
   },
   ko: {
     sessionActivated: '세션이 성공적으로 활성화되었습니다!',
     welcomeToEthobot: 'ETHOBOT에 오신 것을 환영합니다',
-    assistantPrompt: '안면 인식 기술에 초점을 맞춘 개인 AI 윤리 교육 도우미입니다. 시작하려면 이름과 과정 번호를 입력해주세요.',
+    assistantPrompt:
+      'AI 윤리 탐구를 위한 개인 학습 도우미입니다. 시작하려면 이름과 과정 번호를 입력해 주세요.',
     fullNameLabel: '이름',
     fullNamePlaceholder: '예: 홍길동',
     courseNumberLabel: '과정 번호',
@@ -97,24 +106,32 @@ const translations = {
     you: '나',
     inputPlaceholder: '여기에 메시지를 입력하세요...',
     welcomeBack: '다시 오신 것을 환영합니다!',
-    sessionRecoveryPrompt: '기존 세션을 찾았습니다. 중단한 부분부터 계속하시겠습니까, 아니면 새 세션을 시작하시겠습니까?',
+    sessionRecoveryPrompt:
+      '기존 세션을 찾았습니다. 이어서 진행하시겠습니까, 아니면 새 세션을 시작하시겠습니까?',
     startNewWarning: '새 세션을 시작하면 이전 진행 상황이 모두 삭제됩니다.',
     startNewSessionButton: '새 세션 시작',
-    continueSessionButton: '세션 계속하기',
+    continueSessionButton: '세션 이어가기',
     aboutTitle: 'ETHOBOT 정보',
     aboutSubtitle: 'AI 윤리 교육 보조',
     purposeAndModel: '목적 및 교육 모델',
-    purposeText: 'ETHOBOT은 학생들이 복잡한 AI 윤리 주제를 탐색하도록 돕기 위해 설계된 AI 기반 챗봇입니다. 이 챗봇은 Google의 Gemini 모델을 기반으로 하며, 비판적 사고와 구조화된 문제 해결을 강조하는 교육 프레임워크에 따라 안내됩니다. 이 프레임워크는 다음을 포함합니다:',
-    pedagogy1: '정보 제공 후 안내(Give-then-Guide) 교육법: 간결한 정보를 제공한 후 소크라테스식 질문으로 깊은 사고를 유도합니다.',
-    pedagogy2: '문제 해결 단계: Jonassen의 단계(문제 정의, 해결책 탐색, 실행, 성찰)에 따라 대화를 구조화합니다.',
-    pedagogy3: '상호작용 학습: 대화형 챌린지, 실제 사례 연구 및 지식 자료를 사용하여 학습을 흥미롭게 만듭니다.',
+    purposeText:
+      'ETHOBOT은 학생들이 복잡한 AI 윤리 주제를 탐구하도록 돕기 위해 설계된 AI 기반 챗봇입니다. 이 챗봇은 Google Gemini 모델을 기반으로 하며, 비판적 사고와 구조화된 문제 해결을 강조하는 교육 프레임워크에 따라 안내됩니다. 이 프레임워크는 다음을 포함합니다:',
+    pedagogy1:
+      '정보 제공 후 안내(Give-then-Guide) 교육법: 간결한 정보를 제공한 뒤 소크라테스식 질문으로 더 깊은 사고를 유도합니다.',
+    pedagogy2:
+      '문제 해결 단계: Jonassen의 단계(문제 정의, 해결책 탐색, 실행, 성찰)에 따라 대화를 구조화합니다.',
+    pedagogy3:
+      '상호작용 학습: 대화형 챌린지, 실제 사례 연구, 지식 자료를 사용해 학습을 더 흥미롭게 만듭니다.',
     keyFeatures: '주요 기능',
     feature1: '대화형 채팅: AI 윤리에 대한 역동적이고 안내된 대화에 참여합니다.',
-    feature2: '구조화된 학습 경로: 포괄적인 학습 경험을 위해 정의된 문제 해결 단계를 진행합니다.',
-    feature3: '챌린지 및 사례 연구: 실제 윤리적 딜레마와 시나리오에 지식을 적용합니다.',
-    feature4: '게임화: 챌린지를 완료하고 진행 상황에 따라 포인트와 배지를 획득합니다.',
+    feature2:
+      '구조화된 학습 경로: 정의된 문제 해결 단계를 따라 포괄적인 학습 경험을 제공합니다.',
+    feature3:
+      '챌린지 및 사례 연구: 실제 윤리적 딜레마와 시나리오에 지식을 적용합니다.',
+    feature4: '게임화: 챌린지를 완료하고 진척에 따라 포인트와 배지를 획득합니다.',
     privacyAndSecurity: '개인정보 보호 및 데이터 보안',
-    privacyText: '귀하의 개인정보는 중요합니다. 대화, 이름, 과정 번호는 교육 연구 목적으로 기록됩니다. 인증은 Supabase를 통해 안전하게 관리됩니다.',
+    privacyText:
+      '귀하의 개인정보는 중요합니다. 대화 내용, 이름, 과정 번호는 교육 연구 목적으로 기록될 수 있습니다. 인증은 Supabase를 통해 안전하게 관리됩니다.',
     signOut: '로그아웃',
     signIn: '로그인',
     signUp: '회원가입',
@@ -127,7 +144,7 @@ const translations = {
     signInButton: '로그인',
     signUpButton: '회원가입',
     invalidEmailPassword: '이메일 또는 비밀번호가 잘못되었습니다.',
-    errorOccurred: '오류가 발생했습니다. 다시 시도해주세요.',
+    errorOccurred: '오류가 발생했습니다. 다시 시도해 주세요.',
     account: '계정',
     myAccount: '내 계정',
     downloadFullHistory: '전체 내역 다운로드',
@@ -141,10 +158,10 @@ const translations = {
     noPastSessions: '저장된 세션이 없습니다.',
     resumeConfirm: '이 세션을 이어서 하시겠습니까? 현재 진행 중인 대화는 사라집니다.',
   },
-};
+} as const;
 
 export type TranslationKey = keyof typeof translations.en;
 
 export const t = (key: TranslationKey, language: Language): string => {
-  return translations[language]?.[key] || translations['en'][key];
+  return translations[language]?.[key] || translations.en[key];
 };
