@@ -3,6 +3,7 @@ import { useEthobot } from './hooks/useEthobot';
 import ActivationModal from './components/ActivationModal';
 import ChatLayout from './components/ChatLayout';
 import SessionRecoveryModal from './components/SessionRecoveryModal';
+import ProjectOverviewPage from './components/ProjectOverviewPage';
 import { Toaster, toast } from 'react-hot-toast';
 import { clearLocalSession } from './services/loggingService';
 import { useLanguage } from './contexts/LanguageContext';
@@ -54,6 +55,20 @@ const App: React.FC = () => {
     return (
       <div className="fixed inset-0 bg-gray-50 flex items-center justify-center">
         <div className="w-16 h-16 border-4 border-alabama-crimson border-dashed rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
+  if (typeof window !== 'undefined' && window.location.pathname === '/project-overview') {
+    return (
+      <div className="font-sans bg-gray-50 text-gray-800">
+        <ProjectOverviewPage
+          onBack={() => {
+            window.location.assign('/');
+          }}
+          onLogClick={ethobot.logClickEvent}
+        />
+        <Toaster position="top-center" />
       </div>
     );
   }
