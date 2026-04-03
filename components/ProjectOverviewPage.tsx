@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowLeft, ArrowUpRight, Compass, GitBranch, Layers3, MessagesSquare, Scale } from 'lucide-react';
+import { ArrowLeft, ArrowRight, ArrowUpRight, Compass, GitBranch, Layers3, MessagesSquare, Scale } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 
 interface ProjectOverviewPageProps {
@@ -22,6 +22,7 @@ const ProjectOverviewPage: React.FC<ProjectOverviewPageProps> = ({ onBack, onLog
         back: '학습자 화면으로 돌아가기',
         contributors: '기여자',
         researchOverview: '연구 개요',
+        analyticsOverview: '애널리틱 개요',
         threeLens: '세 가지 렌즈, 하나의 학습 설계',
         alignment: '왜 이 둘이 잘 맞는가',
         flow: 'ETHOBOT이 이론을 상호작용으로 바꾸는 방식',
@@ -65,6 +66,26 @@ const ProjectOverviewPage: React.FC<ProjectOverviewPageProps> = ({ onBack, onLog
             ['closure delay', 'counter-perspective sequencing', 'value probe', 'continuous openness orientation'],
           ],
         ],
+        analyticsStages: [
+          [
+            '1. Dialogue Signals',
+            '학습자 발화, 선택, 머뭇거림, 정당화 표현, 이해당사자 언급을 입력 신호로 읽습니다.',
+          ],
+          [
+            '2. Reasoning Analytics',
+            '상태 추정, openness 추적, surface compliance 위험, premature convergence 위험을 함께 계산합니다.',
+          ],
+          [
+            '3. Adaptive Moves',
+            '분석 결과에 따라 closure delay, counter-perspective, value probe, self-evaluation 같은 개입을 고릅니다.',
+          ],
+          [
+            '4. Dual Surfaces',
+            '학습자에게는 코칭 언어로, 교수자에게는 모니터링 언어로 번역해 서로 다른 화면에 보여줍니다.',
+          ],
+        ],
+        analyticsCaption:
+          '즉, ETHOBOT의 애널리틱은 단순 기록이 아니라 대화 흐름을 읽고, 개입을 선택하고, learner-facing coaching과 instructor-facing monitoring으로 번역하는 조정 레이어입니다.',
         noteBody:
           '이 페이지는 ETHOBOT을 위한 설계 종합입니다. Jonassen의 비구조적 문제해결과 대화 중심 딜레마 교수법을 함께 해석해 인터페이스, 프롬프트, 애널리틱 설계를 정리한 것입니다.',
       }
@@ -79,6 +100,7 @@ const ProjectOverviewPage: React.FC<ProjectOverviewPageProps> = ({ onBack, onLog
         back: 'Back to learner workspace',
         contributors: 'Contributors',
         researchOverview: 'Research Overview',
+        analyticsOverview: 'Analytics Overview',
         threeLens: 'Three lenses, one learning design',
         alignment: 'Why these traditions fit together',
         flow: 'How ETHOBOT translates the theory into interaction',
@@ -122,6 +144,26 @@ const ProjectOverviewPage: React.FC<ProjectOverviewPageProps> = ({ onBack, onLog
             ['closure delay', 'counter-perspective sequencing', 'value probe', 'continuous openness orientation'],
           ],
         ],
+        analyticsStages: [
+          [
+            '1. Dialogue Signals',
+            'Learner turns, choices, hesitation, justification language, and stakeholder references enter the system as live signals.',
+          ],
+          [
+            '2. Reasoning Analytics',
+            'The engine estimates reasoning state, tracks openness, and flags surface compliance or premature convergence risks.',
+          ],
+          [
+            '3. Adaptive Moves',
+            'Those analytics select the next intervention move, such as closure delay, counter-perspective, value probe, or self-evaluation.',
+          ],
+          [
+            '4. Dual Surfaces',
+            'The same analytics are then translated into learner-facing coaching language and instructor-facing monitoring language.',
+          ],
+        ],
+        analyticsCaption:
+          'In other words, ETHOBOT analytics do more than record dialogue. They read the flow, select the next intervention, and translate the result into two different pedagogical surfaces.',
         noteBody:
           'This page is a design synthesis for ETHOBOT. It interprets Jonassen’s account of ill-structured problem solving alongside dialogue-centered dilemma pedagogy to guide interface, prompt, and analytics decisions.',
       };
@@ -214,6 +256,44 @@ const ProjectOverviewPage: React.FC<ProjectOverviewPageProps> = ({ onBack, onLog
               </div>
             ))}
           </div>
+        </div>
+
+        <div className="border-b border-lyceum-line px-6 py-10 sm:px-10">
+          <p className="text-[10px] font-extrabold uppercase tracking-[0.3em] text-lyceum-muted">{copy.analyticsOverview}</p>
+          <h3 className="mt-3 font-headline text-4xl font-bold text-lyceum-ink">Dialogue to analytics to intervention</h3>
+          <div className="mt-8 grid gap-4 xl:grid-cols-[1fr_auto_1fr_auto_1fr_auto_1fr]">
+            {copy.analyticsStages.map((stage, index) => (
+              <React.Fragment key={stage[0]}>
+                <div className={`rounded-[1.5rem] border border-lyceum-line px-5 py-6 ${
+                  index === 1 ? 'bg-[#f6efe0]' : index === 2 ? 'bg-lyceum-ink text-lyceum-paper' : 'bg-white'
+                }`}>
+                  <p className={`text-[10px] font-extrabold uppercase tracking-[0.24em] ${
+                    index === 2 ? 'text-lyceum-paper/58' : 'text-lyceum-muted'
+                  }`}>
+                    {stage[0]}
+                  </p>
+                  <p className={`mt-3 font-headline text-2xl font-bold leading-tight ${
+                    index === 2 ? 'text-white' : 'text-lyceum-ink'
+                  }`}>
+                    {stage[0].replace(/^\d+\.\s*/, '')}
+                  </p>
+                  <p className={`mt-3 text-sm leading-7 ${
+                    index === 2 ? 'text-lyceum-paper/78' : 'text-lyceum-ink-soft'
+                  }`}>
+                    {stage[1]}
+                  </p>
+                </div>
+                {index < copy.analyticsStages.length - 1 && (
+                  <div className="hidden items-center justify-center xl:flex">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full border border-lyceum-line bg-[#fcfaf4] text-lyceum-accent">
+                      <ArrowRight size={16} />
+                    </div>
+                  </div>
+                )}
+              </React.Fragment>
+            ))}
+          </div>
+          <p className="mt-6 max-w-4xl text-sm leading-7 text-lyceum-ink-soft">{copy.analyticsCaption}</p>
         </div>
 
         <div className="border-b border-lyceum-line px-6 py-10 sm:px-10">
