@@ -11,14 +11,14 @@
     "id": "facial_recognition_overview",
     "title": "Facial Recognition Technology Debates",
     "summary": "An overview of how facial recognition technology works, its applications in law enforcement and commercial sectors, and the central ethical debates surrounding privacy, surveillance, and consent.",
-    "url": "https://www.aclu.org/issues/privacy-technology",
+    "url": "https://www.aclu.org/issues/privacy-technology/surveillance-technologies/face-recognition-technology",
     "blogUrl": "https://www.eff.org/pages/face-recognition"
   },
   {
     "id": "facial_recognition_bias",
     "title": "Bias in Facial Recognition Systems",
     "summary": "Examines algorithmic bias where systems show higher error rates for women, people of color, and younger/older individuals. This bias often stems from unrepresentative training data and can be worsened by environmental factors like poor lighting. Consequences include false arrests, misidentification, and inequitable access to services.",
-    "url": "http://proceedings.mlr.press/v81/buolamwini18a/buolamwini18a.pdf",
+    "url": "https://proceedings.mlr.press/v81/buolamwini18a/buolamwini18a.pdf",
     "youtubeUrl": "https://www.youtube.com/watch?v=jZl55PsfZJQ"
   },
   {
@@ -26,14 +26,14 @@
     "title": "Accuracy Across Demographics (NIST Study)",
     "summary": "Quantitative studies, particularly from the National Institute of Standards and Technology (NIST), reveal significant accuracy disparities across demographic groups. Many algorithms exhibit higher rates of false positives for Asian and African American faces, sometimes 10 to 100 times higher than for Caucasian faces. The highest error rates are often found for Black women, demonstrating a critical intersectional bias.",
     "url": "https://www.nist.gov/news-events/news/2019/12/nist-study-evaluates-effects-race-age-sex-face-recognition-software",
-    "blogUrl": "http://gendershades.org/"
+    "blogUrl": "https://gendershades.org/"
   },
   {
     "id": "facial_recognition_surveillance",
     "title": "Facial Recognition and Mass Surveillance",
     "summary": "Discusses how facial recognition is a key technology for mass surveillance, raising concerns about the erosion of anonymity in public spaces and the chilling effect on free speech and association.",
     "url": "https://banthescan.amnesty.org/",
-    "youtubeUrl": "https://www.brookings.edu/articles/police-surveillance-and-facial-recognition-why-data-privacy-is-an-imperative-for-communities-of-color/"
+    "blogUrl": "https://www.brookings.edu/articles/police-surveillance-and-facial-recognition-why-data-privacy-is-an-imperative-for-communities-of-color/"
   },
   {
     "id": "facial_recognition_consent",
