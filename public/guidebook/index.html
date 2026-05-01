@@ -1,0 +1,588 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ETHOBOT CAT 100 Guidebook — Persona Dialogue Learning Journey</title>
+<style>
+  :root {
+    --crimson: #9e1b32;
+    --crimson-soft: #f8e7eb;
+    --ink: #1a1a1a;
+    --ink-soft: #4a4a4a;
+    --line: #e2e2e2;
+    --bg: #fafafa;
+    --code-bg: #f3f4f6;
+    --gold: #ffd700;
+    --green: #2f7d32;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, "Noto Sans KR", sans-serif;
+    color: var(--ink);
+    background: var(--bg);
+    line-height: 1.55;
+  }
+  .layout {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    max-width: 1300px;
+    margin: 0 auto;
+    min-height: 100vh;
+  }
+  nav.toc {
+    position: sticky;
+    top: 0;
+    align-self: start;
+    height: 100vh;
+    overflow-y: auto;
+    padding: 24px 18px;
+    background: #fff;
+    border-right: 1px solid var(--line);
+  }
+  nav.toc h1 { font-size: 16px; margin: 0 0 4px 0; color: var(--crimson); letter-spacing: 0.02em; }
+  nav.toc .subtitle { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-soft); margin-bottom: 16px; }
+  nav.toc ol { list-style: none; margin: 0; padding: 0; counter-reset: section; }
+  nav.toc li { margin: 0; padding: 0; counter-increment: section; }
+  nav.toc a {
+    display: block;
+    text-decoration: none;
+    color: var(--ink);
+    padding: 6px 8px;
+    border-radius: 4px;
+    font-size: 13px;
+  }
+  nav.toc a:hover { background: var(--crimson-soft); color: var(--crimson); }
+  nav.toc a.section-anchor::before {
+    content: counter(section, decimal-leading-zero) "  ";
+    color: var(--ink-soft);
+    font-variant-numeric: tabular-nums;
+    margin-right: 4px;
+  }
+  nav.toc .group-label {
+    display: block;
+    margin-top: 14px;
+    margin-bottom: 4px;
+    padding: 0 8px;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--ink-soft);
+  }
+  main { padding: 36px 56px; max-width: 980px; }
+  h1.title { font-size: 32px; margin-top: 0; }
+  h2 { color: var(--crimson); font-size: 22px; margin-top: 48px; padding-top: 12px; border-top: 2px solid var(--crimson); }
+  h3 { font-size: 17px; margin-top: 32px; }
+  p { margin: 10px 0; }
+  code { background: var(--code-bg); padding: 1px 6px; border-radius: 3px; font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.92em; }
+  pre { background: var(--code-bg); padding: 14px 16px; border-radius: 6px; overflow-x: auto; font-size: 13px; line-height: 1.5; }
+  pre code { background: transparent; padding: 0; }
+  .lead {
+    font-size: 18px;
+    color: var(--ink-soft);
+    margin-bottom: 20px;
+  }
+  .meta-card {
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 14px 18px;
+    background: #fff;
+    font-size: 14px;
+  }
+  .meta-card dl { margin: 0; display: grid; grid-template-columns: 140px 1fr; gap: 4px 16px; }
+  .meta-card dt { font-weight: 600; color: var(--ink-soft); }
+  .meta-card dd { margin: 0; }
+  .phase {
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: #fff;
+    margin-top: 18px;
+    overflow: hidden;
+  }
+  .phase header {
+    background: linear-gradient(180deg, #fff 0%, #fafafa 100%);
+    border-bottom: 1px solid var(--line);
+    padding: 12px 18px;
+  }
+  .phase header .step {
+    display: inline-block;
+    background: var(--crimson);
+    color: #fff;
+    padding: 2px 10px;
+    border-radius: 999px;
+    font-size: 11px;
+    letter-spacing: 0.05em;
+    margin-right: 8px;
+  }
+  .phase header h3 { margin: 6px 0 2px 0; font-size: 16px; }
+  .phase header .summary { font-size: 13px; color: var(--ink-soft); margin: 0; }
+  .phase .body { padding: 16px 18px; font-size: 14px; }
+  .phase .body ul { margin: 6px 0; padding-left: 22px; }
+  .phase .shot { padding: 0 18px 18px; }
+  .phase .shot img { width: 100%; border: 1px solid var(--line); border-radius: 6px; display: block; }
+  .phase .caption { font-size: 12px; color: var(--ink-soft); margin-top: 8px; padding: 0 4px; font-style: italic; }
+  .badge {
+    display: inline-block;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+  }
+  .badge.ld  { background: #e8f0fe; color: #1747a3; }
+  .badge.ar  { background: #fff4e6; color: #a35200; }
+  .badge.ok  { background: #e8f5e9; color: var(--green); }
+  .pill-row { display: flex; gap: 8px; flex-wrap: wrap; margin: 4px 0 12px; }
+  .compare {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin: 12px 0;
+  }
+  .compare .col {
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 12px 14px;
+    background: #fff;
+    font-size: 13px;
+  }
+  .compare .col h4 { margin: 0 0 6px 0; font-size: 13px; color: var(--crimson); }
+  .compare .col code { font-size: 12px; }
+  table.flow {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 12px 0 18px;
+    font-size: 13px;
+  }
+  table.flow th, table.flow td {
+    border: 1px solid var(--line);
+    padding: 8px 10px;
+    text-align: left;
+    vertical-align: top;
+  }
+  table.flow th { background: var(--code-bg); font-weight: 600; color: var(--ink-soft); }
+  table.flow td:first-child { width: 26%; }
+  .sql {
+    border-left: 4px solid var(--crimson);
+    padding-left: 12px;
+    margin: 18px 0;
+  }
+  footer {
+    margin-top: 80px;
+    padding-top: 20px;
+    border-top: 1px solid var(--line);
+    color: var(--ink-soft);
+    font-size: 12px;
+  }
+  @media (max-width: 900px) {
+    .layout { grid-template-columns: 1fr; }
+    nav.toc { position: static; height: auto; border-right: none; border-bottom: 1px solid var(--line); }
+    main { padding: 24px; }
+    .compare { grid-template-columns: 1fr; }
+  }
+  @media print {
+    nav.toc { display: none; }
+    .layout { grid-template-columns: 1fr; }
+    main { padding: 0; }
+    .phase { page-break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+<div class="layout">
+  <nav class="toc" aria-label="Table of contents">
+    <h1>ETHOBOT CAT 100</h1>
+    <p class="subtitle">Persona Dialogue Guidebook</p>
+
+    <a class="section-anchor" href="#overview">Overview</a>
+    <a class="section-anchor" href="#deployment">Deployment & URLs</a>
+
+    <span class="group-label">Learner-Directed Journey</span>
+    <a class="section-anchor" href="#ld-01">Intro / dilemma context</a>
+    <a class="section-anchor" href="#ld-02">Pre-form (empty)</a>
+    <a class="section-anchor" href="#ld-03">Pre-form (filled)</a>
+    <a class="section-anchor" href="#ld-04">Facilitator opening</a>
+    <a class="section-anchor" href="#ld-05">Probe 1</a>
+    <a class="section-anchor" href="#ld-06">Probe 2</a>
+    <a class="section-anchor" href="#ld-07">Jordan joins</a>
+    <a class="section-anchor" href="#ld-08">Mini-dialogue</a>
+    <a class="section-anchor" href="#ld-09">Jordan exits + return</a>
+    <a class="section-anchor" href="#ld-10">Mr. Park joins</a>
+    <a class="section-anchor" href="#ld-11">Mr. Park exits + return</a>
+    <a class="section-anchor" href="#ld-12">Post-form (empty)</a>
+    <a class="section-anchor" href="#ld-13">Post-form (filled)</a>
+    <a class="section-anchor" href="#ld-14">Pre/Post comparison</a>
+    <a class="section-anchor" href="#ld-15">Debrief</a>
+
+    <span class="group-label">AI-Recommended Journey</span>
+    <a class="section-anchor" href="#ar-16">Intro</a>
+    <a class="section-anchor" href="#ar-17">Chat opening</a>
+    <a class="section-anchor" href="#ar-18">Rule 1 fires</a>
+    <a class="section-anchor" href="#ar-19">Recommendation accepted</a>
+
+    <span class="group-label">Reference</span>
+    <a class="section-anchor" href="#data-model">Logging schema</a>
+    <a class="section-anchor" href="#sql-recipes">SQL recipes</a>
+    <a class="section-anchor" href="#troubleshooting">Troubleshooting</a>
+  </nav>
+
+  <main>
+    <h1 class="title">Persona Dialogue Learning Journey</h1>
+    <p class="lead">A walk-through of every screen a CAT 100 student sees, with verified Playwright captures of both Learner-Directed and AI-Recommended conditions. This guidebook doubles as instructor onboarding and IRB reference.</p>
+
+    <div class="meta-card">
+      <dl>
+        <dt>Audience</dt><dd>Course instructors, IRB reviewers, research collaborators, dev/ops</dd>
+        <dt>Scenario shown</dt><dd>Scenario A — AI Classroom Monitoring Tool</dd>
+        <dt>Conditions</dt>
+        <dd>
+          <span class="badge ld">Learner-directed</span>
+          <span class="badge ar">AI-recommended</span>
+        </dd>
+        <dt>Source of truth</dt><dd>Playwright spec <code>tests/e2e/guidebook-captures.spec.ts</code> (re-run any time)</dd>
+        <dt>Last updated</dt><dd id="last-updated">2026-04-30</dd>
+      </dl>
+    </div>
+
+    <h2 id="overview">Overview</h2>
+    <p>ETHOBOT 3.2 implements the proposal's <em>persona-driven dilemma dialogue</em>: pre-service teachers in CAT 100 think through a real classroom dilemma while ETHOBOT acts as a Socratic facilitator. Stakeholder personas (teacher, student, parent, administrator) can join the conversation to surface viewpoints the learner has not yet considered. The system records every turn, persona call, recommendation, and pre/post position change for analysis.</p>
+
+    <p>The system runs in two experimental conditions:</p>
+    <div class="compare">
+      <div class="col">
+        <h4>Learner-directed (LD)</h4>
+        <ul>
+          <li>Persona panel cards are <strong>always clickable</strong>.</li>
+          <li>The learner decides who joins and when.</li>
+          <li>ETHOBOT does not signal which persona is most relevant.</li>
+        </ul>
+      </div>
+      <div class="col">
+        <h4>AI-recommended (AR)</h4>
+        <ul>
+          <li>Cards are disabled until ETHOBOT recommends.</li>
+          <li>From turn 4 onward, three rules fire on reasoning gaps.</li>
+          <li>2-turn cooldown between recommendations; not-yet-called personas take priority.</li>
+        </ul>
+      </div>
+    </div>
+
+    <h2 id="deployment">Deployment & URLs</h2>
+    <p>Each participant gets a personalized URL. The <code>pid</code> parameter becomes the participant identifier in every logged event.</p>
+    <pre><code>https://ethobot32.vercel.app/cat100?condition=ld&scenario=a&pid=P001&course=CAT100-Spring26
+https://ethobot32.vercel.app/cat100?condition=ar&scenario=b&pid=P002&course=CAT100-Spring26</code></pre>
+    <table class="flow">
+      <tr><th>URL parameter</th><th>Values</th><th>Purpose</th></tr>
+      <tr><td><code>condition</code></td><td><code>ld</code> | <code>ar</code></td><td>Experimental condition assignment</td></tr>
+      <tr><td><code>scenario</code></td><td><code>a</code> | <code>b</code></td><td>Dilemma scenario (A: classroom monitoring; B: EdTech data sharing)</td></tr>
+      <tr><td><code>pid</code></td><td>any string</td><td>Participant identifier — recorded as <code>participant_id</code></td></tr>
+      <tr><td><code>course</code></td><td>any string</td><td>Course label — recorded as <code>course</code></td></tr>
+      <tr><td><code>personaTurns</code></td><td><code>2</code> | <code>3</code></td><td>Optional override for mini-dialogue length (default randomized 2–3)</td></tr>
+    </table>
+
+    <h3>LLM provider — OpenRouter</h3>
+    <p>CAT 100 chat goes through the Vercel Edge function <code>api/cat100-chat.ts</code>, which proxies to OpenRouter with a fallback chain (<code>google/gemini-2.0-flash-001 → google/gemini-flash-1.5 → openai/gpt-4o-mini</code>). The key is server-side only — students never see it.</p>
+    <p>Required Vercel project env vars:</p>
+    <ul>
+      <li><code>OPENROUTER_API_KEY</code> — secret, server-only. Powers the CAT 100 dialogue.</li>
+      <li><code>VITE_SUPABASE_URL</code>, <code>VITE_SUPABASE_ANON_KEY</code> — baked at build time; needed for <code>cat100_events</code> persistence.</li>
+    </ul>
+    <p>Cost per session (12 LLM calls × ~500 tokens, Gemini 2.0 Flash): <strong>~$0.01</strong>. A 50-participant pilot runs under <strong>$0.50 total</strong>.</p>
+
+    <h2 id="ld-section">Learner-directed Journey <span class="badge ld">LD</span></h2>
+    <p>The 15 phases below trace the proposal's worked LD example: a learner who starts with <code>support / 80% / [Safety, Accountability]</code> and ends with <code>unsure / 50% / [Privacy, Fairness, Safety]</code> after talking to two of the four personas.</p>
+
+    <article class="phase" id="ld-01">
+      <header>
+        <span class="step">Step 01</span>
+        <h3>Intro — dilemma context panel</h3>
+        <p class="summary">Scenario text, key actors, core ethical tension, guiding question, and persona identity cards (preview).</p>
+      </header>
+      <div class="body">
+        <p>The learner reads the dilemma in full before seeing any chat. The four persona identity cards are visible but disabled at this stage — they preview <em>who could join</em> the conversation later.</p>
+      </div>
+      <div class="shot"><img alt="Intro screen" src="screenshots/01-intro.png" /></div>
+    </article>
+
+    <article class="phase" id="ld-02">
+      <header>
+        <span class="step">Step 02</span>
+        <h3>Pre-form — empty</h3>
+        <p class="summary">Initial position input module, before the learner records anything.</p>
+      </header>
+      <div class="body">
+        <p>Three required widgets: <strong>stance</strong> (support / oppose / unsure), <strong>confidence slider</strong> (0–100%), and <strong>value priorities</strong> (1–4 of six ISTE-aligned values). Submit stays disabled until stance and at least one value are selected.</p>
+      </div>
+      <div class="shot"><img alt="Pre-form empty" src="screenshots/02-pre-form-empty.png" /></div>
+    </article>
+
+    <article class="phase" id="ld-03">
+      <header>
+        <span class="step">Step 03</span>
+        <h3>Pre-form — filled (proposal example)</h3>
+        <p class="summary">support / 80% / [Safety, Accountability].</p>
+      </header>
+      <div class="body">
+        <p>This is the exact starting position from the proposal's worked example (LD section). The submit button enables once the form is valid.</p>
+      </div>
+      <div class="shot"><img alt="Pre-form filled" src="screenshots/03-pre-form-filled.png" /></div>
+    </article>
+
+    <article class="phase" id="ld-04">
+      <header>
+        <span class="step">Step 04</span>
+        <h3>Facilitator opening — reflects the learner's stance</h3>
+        <p class="summary">ETHOBOT opens the chat with a Socratic question grounded in the just-recorded position.</p>
+      </header>
+      <div class="body">
+        <p>The opening message reflects both <em>stance</em> and at least one <em>value priority</em> back to the learner before asking what feels most compelling. This is the first verifiable signal that the pre-form data is wired into the dialogue context.</p>
+        <p class="caption">Proposal text: <em>"You said you support adopting the tool. What feels most compelling about that to you?"</em></p>
+      </div>
+      <div class="shot"><img alt="Facilitator opening" src="screenshots/04-facilitator-opening.png" /></div>
+    </article>
+
+    <article class="phase" id="ld-05">
+      <header>
+        <span class="step">Step 05</span>
+        <h3>Probe 1 — assumption surfacing</h3>
+        <p class="summary">After the learner's first reply, ETHOBOT probes what would have to be true for the claim to hold.</p>
+      </header>
+      <div class="shot"><img alt="Probe 1" src="screenshots/05-facilitator-probe-1.png" /></div>
+    </article>
+
+    <article class="phase" id="ld-06">
+      <header>
+        <span class="step">Step 06</span>
+        <h3>Probe 2 — counterfactual</h3>
+        <p class="summary">ETHOBOT escalates with a counterfactual when the learner stays in a single frame.</p>
+      </header>
+      <div class="shot"><img alt="Probe 2" src="screenshots/06-facilitator-probe-2.png" /></div>
+    </article>
+
+    <article class="phase" id="ld-07">
+      <header>
+        <span class="step">Step 07</span>
+        <h3>Jordan (Student persona) joins</h3>
+        <p class="summary">The learner clicks Jordan's card; persona enters with a self-introduction.</p>
+      </header>
+      <div class="body">
+        <p>Jordan's identity card transitions to the <code>active</code> state (orange border in screenshot). The persona's self-introduction is voice-consistent with Jordan's style guide: a middle-school student, first-person, slightly hesitant, observational.</p>
+      </div>
+      <div class="shot"><img alt="Jordan joined" src="screenshots/07-jordan-joined.png" /></div>
+    </article>
+
+    <article class="phase" id="ld-08">
+      <header>
+        <span class="step">Step 08</span>
+        <h3>Mini-dialogue — turn 1</h3>
+        <p class="summary">The learner replies; Jordan responds in character. Mini-dialogue length is 2 turns by default.</p>
+      </header>
+      <div class="shot"><img alt="Jordan turn 1" src="screenshots/08-jordan-turn-1.png" /></div>
+    </article>
+
+    <article class="phase" id="ld-09">
+      <header>
+        <span class="step">Step 09</span>
+        <h3>Jordan exits — facilitator returns with a summary</h3>
+        <p class="summary">After the second exchange, Jordan's card flips to <code>completed</code> and ETHOBOT automatically streams a 2–3 sentence facilitator return that connects Jordan's contribution to the learner's earlier reasoning.</p>
+      </header>
+      <div class="body">
+        <p>This handoff is fully automatic — the learner does not need to dismiss the persona or trigger the facilitator return.</p>
+      </div>
+      <div class="shot"><img alt="Jordan exited + facilitator return" src="screenshots/09-jordan-exited-facilitator-return.png" /></div>
+    </article>
+
+    <article class="phase" id="ld-10">
+      <header>
+        <span class="step">Step 10</span>
+        <h3>Mr. Park (Parent persona) joins</h3>
+        <p class="summary">The learner picks a second persona; once-called personas (Jordan) cannot be re-opened.</p>
+      </header>
+      <div class="body">
+        <p>Jordan's card now reads <em>"Spoke with you earlier"</em> and has no Open button — the proposal's <em>"personas not yet called take priority"</em> rule is enforced structurally in the UI.</p>
+      </div>
+      <div class="shot"><img alt="Mr. Park joined" src="screenshots/10-mr-park-joined.png" /></div>
+    </article>
+
+    <article class="phase" id="ld-11">
+      <header>
+        <span class="step">Step 11</span>
+        <h3>Mr. Park exits — facilitator return</h3>
+        <p class="summary">After two more exchanges, Mr. Park exits and ETHOBOT names what he contributed (consent, authority).</p>
+      </header>
+      <div class="shot"><img alt="Mr. Park exited" src="screenshots/11-mr-park-exited-facilitator-return.png" /></div>
+    </article>
+
+    <article class="phase" id="ld-12">
+      <header>
+        <span class="step">Step 12</span>
+        <h3>Post-form — empty</h3>
+        <p class="summary">After "End dialogue," the closing-position module appears with the same widgets as the pre-form.</p>
+      </header>
+      <div class="body">
+        <p>A helper line shows where the learner started (<em>"Compare to where you started: SUPPORT at 80%"</em>) so they have an anchor while recording the closing position.</p>
+      </div>
+      <div class="shot"><img alt="Post-form empty" src="screenshots/12-post-form-empty.png" /></div>
+    </article>
+
+    <article class="phase" id="ld-13">
+      <header>
+        <span class="step">Step 13</span>
+        <h3>Post-form — filled</h3>
+        <p class="summary">unsure / 50% / [Privacy, Fairness, Safety] — the proposal's exact closing position.</p>
+      </header>
+      <div class="shot"><img alt="Post-form filled" src="screenshots/13-post-form-filled.png" /></div>
+    </article>
+
+    <article class="phase" id="ld-14">
+      <header>
+        <span class="step">Step 14</span>
+        <h3>Pre/Post comparison</h3>
+        <p class="summary">Stance shift (<em>softened</em>), confidence delta (-30), values added [privacy, fairness], values removed [accountability].</p>
+      </header>
+      <div class="body">
+        <p>The classification is computed by <code>services/stancePrePost.ts</code>. The four shift labels are <code>same</code>, <code>softened</code>, <code>sharpened</code>, <code>reversed</code> — designed for the proposal's <em>confidence calibration</em> assessment.</p>
+      </div>
+      <div class="shot"><img alt="Pre/Post comparison" src="screenshots/14-pre-post-comparison.png" /></div>
+    </article>
+
+    <article class="phase" id="ld-15">
+      <header>
+        <span class="step">Step 15</span>
+        <h3>Debrief</h3>
+        <p class="summary">Final summary screen: initial vs closing position, full delta, exit to ETHOBOT root.</p>
+      </header>
+      <div class="shot"><img alt="Debrief" src="screenshots/15-debrief.png" /></div>
+    </article>
+
+    <h2 id="ar-section">AI-Recommended Journey <span class="badge ar">AR</span></h2>
+    <p>In the AR condition the learner cannot freely click persona cards; ETHOBOT surfaces a recommendation only when one of three reasoning-gap rules fires (and only after turn 4, with a 2-turn cooldown). The four phases below show the moment of trigger.</p>
+
+    <article class="phase" id="ar-16">
+      <header>
+        <span class="step">Step 16</span>
+        <h3>Intro — same as LD</h3>
+        <p class="summary">Identical dilemma context panel; URL parameter <code>condition=ar</code> only changes downstream behavior.</p>
+      </header>
+      <div class="shot"><img alt="AR intro" src="screenshots/16-ar-intro.png" /></div>
+    </article>
+
+    <article class="phase" id="ar-17">
+      <header>
+        <span class="step">Step 17</span>
+        <h3>Chat opening — cards disabled</h3>
+        <p class="summary">Persona panel reads <em>"ETHOBOT will surface a persona when relevant"</em>. All four cards are <code>disabled</code>.</p>
+      </header>
+      <div class="shot"><img alt="AR chat opening" src="screenshots/17-ar-chat-opening.png" /></div>
+    </article>
+
+    <article class="phase" id="ar-18">
+      <header>
+        <span class="step">Step 18</span>
+        <h3>Rule 1 fires — non-teacher persona highlighted</h3>
+        <p class="summary">After four turns referencing only the teacher, Rule 1 (single-stakeholder) recommends Jordan.</p>
+      </header>
+      <div class="body">
+        <p>The recommendation lands as a regular ETHOBOT chat message with a one-sentence rationale plus an inline <em>"Open Jordan →"</em> button. In the panel, Jordan's card flips to <code>highlighted</code> (red ring) while the others stay <code>disabled</code>.</p>
+        <p class="caption">Trigger logic: <code>services/personaRecommender.ts</code> — gating <code>turn ≥ 4</code> AND <code>(currentTurn − lastRecommendationTurn) ≥ 2</code>; preference for not-yet-called personas.</p>
+      </div>
+      <div class="shot"><img alt="AR recommendation" src="screenshots/18-ar-recommendation.png" /></div>
+    </article>
+
+    <article class="phase" id="ar-19">
+      <header>
+        <span class="step">Step 19</span>
+        <h3>Open accepted — persona enters</h3>
+        <p class="summary">Click "Open Jordan →"; recommendation clears, Jordan's card transitions <code>highlighted → active</code>, mini-dialogue begins.</p>
+      </header>
+      <div class="body">
+        <p>The system records the time between recommendation surface and click as <code>persona_open_latency_ms</code>. From here the mini-dialogue mechanics are identical to the LD condition.</p>
+      </div>
+      <div class="shot"><img alt="AR persona accepted" src="screenshots/19-ar-persona-accepted.png" /></div>
+    </article>
+
+    <h2 id="data-model">Logging Schema</h2>
+    <p>Every event from every session lands in <code>public.cat100_events</code> (Supabase, project <code>fzmfzspuckfwolyxdtkm</code>) plus a parallel Sheets backup. The <code>details_json</code> column is jsonb, so payload shape can evolve without migrations.</p>
+
+    <table class="flow">
+      <tr><th>Event type</th><th>Fired when</th><th>Key payload fields</th></tr>
+      <tr><td><code>CAT100_SESSION_START</code></td><td>Chat initialized after pre-form</td><td><code>scenarioId</code>, <code>condition</code>, <code>initialPosition</code></td></tr>
+      <tr><td><code>CAT100_INITIAL_POSITION</code></td><td>Pre-form submitted</td><td><code>initialPosition</code> (stance/confidence/values)</td></tr>
+      <tr><td><code>CAT100_PERSONA_RECOMMENDED</code> <span class="badge ar">AR</span></td><td>Rule 1/2/3 fires</td><td><code>personaId</code>, <code>triggerRule</code>, <code>rationale</code>, <code>turnNumber</code></td></tr>
+      <tr><td><code>CAT100_PERSONA_OPENED</code></td><td>Card click or AR Open click</td><td><code>personaId</code>, <code>personaOpenLatencyMs</code> (AR only), <code>triggerRule</code></td></tr>
+      <tr><td><code>CAT100_PERSONA_TURN</code></td><td>Each persona reply</td><td><code>personaId</code>, <code>turnNumber</code></td></tr>
+      <tr><td><code>CAT100_PERSONA_EXITED</code></td><td>Mini-dialogue auto-exit</td><td><code>personaId</code>, <code>miniDialogueTurnCount</code></td></tr>
+      <tr><td><code>CAT100_VOCABULARY_EMERGED</code></td><td>First appearance of dignity / consent / chilling effect / conditional / etc.</td><td><code>vocabularyEmergence</code> with <code>term</code>, <code>firstTurn</code>, <code>personaJustExited</code></td></tr>
+      <tr><td><code>CAT100_CLOSING_POSITION</code></td><td>Post-form submitted</td><td><code>closingPosition</code>, <code>delta</code></td></tr>
+      <tr><td><code>CAT100_SESSION_COMPLETE</code></td><td>"Finish session" clicked</td><td><code>initialPosition</code>, <code>closingPosition</code>, <code>delta</code> (full bundle)</td></tr>
+    </table>
+
+    <h2 id="sql-recipes">SQL Recipes</h2>
+    <p>Three pre-built views cover the proposal's analysis questions. Run them from the Supabase SQL editor (service-role).</p>
+
+    <div class="sql">
+      <h3>Persona-call patterns</h3>
+      <pre><code>SELECT participant_id, condition, persona_id, trigger_rule,
+       open_latency_ms, turn_number, timestamp
+FROM   v_persona_call_patterns
+WHERE  course = 'CAT100-Spring26'
+ORDER  BY participant_id, turn_number;</code></pre>
+    </div>
+
+    <div class="sql">
+      <h3>Pre/Post deltas (one row per session)</h3>
+      <pre><code>SELECT participant_id, condition,
+       initial_stance, closing_stance, stance_shift,
+       initial_confidence, closing_confidence, confidence_delta,
+       values_added, values_removed,
+       session_duration_seconds
+FROM   v_pre_post_deltas
+WHERE  course = 'CAT100-Spring26';</code></pre>
+    </div>
+
+    <div class="sql">
+      <h3>Vocabulary emergence over time</h3>
+      <pre><code>SELECT participant_id, condition, term, first_turn, persona_just_exited
+FROM   v_vocabulary_emergence
+WHERE  course = 'CAT100-Spring26'
+ORDER  BY participant_id, first_turn;</code></pre>
+    </div>
+
+    <h2 id="troubleshooting">Troubleshooting</h2>
+    <table class="flow">
+      <tr><th>Symptom</th><th>Likely cause</th><th>Fix</th></tr>
+      <tr>
+        <td>Participant info banner reads <code>cat100-xxxx</code> (anonymous)</td>
+        <td>URL is missing <code>?pid=...</code></td>
+        <td>Resend the participant their personalized URL.</td>
+      </tr>
+      <tr>
+        <td>Recommendation never fires in AR</td>
+        <td>Gate not yet open (turn &lt; 4) OR every reasoning gap is already covered (multiple stakeholders + multiple value lenses + at least one conditional/evidence)</td>
+        <td>Expected — recommendations are conservative by design. Watch the <code>v_persona_call_patterns</code> view to confirm.</td>
+      </tr>
+      <tr>
+        <td>Persona stays in character even when the learner asks "are you AI?"</td>
+        <td>The persona system prompt enforces character consistency; this is the proposal's intent.</td>
+        <td>Document this in the IRB consent so participants know they're talking to AI in voice.</td>
+      </tr>
+      <tr>
+        <td>Recommendation fires but Open button does nothing</td>
+        <td>Persona may already be in <code>completed</code> state from a prior call</td>
+        <td>Click another card; the engine prefers not-yet-called personas, so this is rare.</td>
+      </tr>
+      <tr>
+        <td>Logs show in Sheets but not Supabase</td>
+        <td>Anon-insert RLS policy missing on <code>cat100_events</code></td>
+        <td>Re-run <code>supabase/cat100_schema.sql</code>.</td>
+      </tr>
+    </table>
+
+    <footer>
+      <p>Self-contained guidebook. Re-generate screenshots: <code>npx playwright test tests/e2e/guidebook-captures.spec.ts</code>. Repository: <a href="https://github.com/Educatian/ethobot3.2">Educatian/ethobot3.2</a>.</p>
+    </footer>
+  </main>
+</div>
+</body>
+</html>

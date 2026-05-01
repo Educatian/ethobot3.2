@@ -16,6 +16,15 @@ dist-ssr
 !.env.example
 tmp-chrome-profile/
 
+# Playwright test artifacts
+test-results/
+playwright-report/
+playwright/.cache/
+
+# Local dev scratch
+_tmp_*
+*.tmp.docx
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

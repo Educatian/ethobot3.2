@@ -4,6 +4,7 @@ import ActivationModal from './components/ActivationModal';
 import ChatLayout from './components/ChatLayout';
 import SessionRecoveryModal from './components/SessionRecoveryModal';
 import ProjectOverviewPage from './components/ProjectOverviewPage';
+import Cat100Page from './components/Cat100Page';
 import { Toaster, toast } from 'react-hot-toast';
 import { clearLocalSession } from './services/loggingService';
 import { useLanguage } from './contexts/LanguageContext';
@@ -67,6 +68,19 @@ const App: React.FC = () => {
             window.location.assign('/');
           }}
           onLogClick={ethobot.logClickEvent}
+        />
+        <Toaster position="top-center" />
+      </div>
+    );
+  }
+
+  if (typeof window !== 'undefined' && window.location.pathname === '/cat100') {
+    return (
+      <div className="font-sans bg-gray-50 text-gray-800">
+        <Cat100Page
+          onBack={() => {
+            window.location.assign('/');
+          }}
         />
         <Toaster position="top-center" />
       </div>

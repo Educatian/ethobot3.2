@@ -413,3 +413,112 @@ export interface SessionLog {
   studentInfo: User;
   events: LogEvent[];
 }
+
+// ============================================================
+// CAT 100 Persona-based dilemma dialogue (Wave 1: data model)
+// ============================================================
+
+export enum StudyCondition {
+  LEARNER_DIRECTED = 'learner_directed',
+  AI_RECOMMENDED = 'ai_recommended',
+}
+
+export enum StancePosition {
+  SUPPORT = 'support',
+  OPPOSE = 'oppose',
+  UNSURE = 'unsure',
+}
+
+export enum ValuePriority {
+  PRIVACY = 'privacy',
+  SAFETY = 'safety',
+  AUTONOMY = 'autonomy',
+  ACCOUNTABILITY = 'accountability',
+  WELL_BEING = 'well_being',
+  FAIRNESS = 'fairness',
+}
+
+export enum TriggerRule {
+  RULE_1_SINGLE_STAKEHOLDER = 'rule1_single_stakeholder',
+  RULE_2_SINGLE_VALUE_LENS = 'rule2_single_value_lens',
+  RULE_3_NO_CONDITIONS_OR_EVIDENCE = 'rule3_no_conditions_or_evidence',
+}
+
+export interface Persona {
+  id: string;
+  scenarioId: string;
+  name: string;
+  role: string;
+  shortDescription: string;
+  valueLens: string;
+  experientialKnowledge: string;
+  interestPosition: string;
+  llmStyleGuide: string;
+  primaryValue: ValuePriority;
+}
+
+export interface Scenario {
+  id: string;
+  title: string;
+  scenario: string;
+  keyActors: string[];
+  coreTension: string;
+  guidingQuestion: string;
+  isteAlignment: string[];
+  valueOptions: ValuePriority[];
+  personas: Persona[];
+}
+
+export interface PositionInput {
+  stance: StancePosition;
+  confidence: number;
+  values: ValuePriority[];
+  recordedAt: string;
+}
+
+export interface PrePostDelta {
+  stanceShift: 'same' | 'softened' | 'reversed' | 'sharpened';
+  stanceFrom: StancePosition;
+  stanceTo: StancePosition;
+  confidenceDelta: number;
+  valuesAdded: ValuePriority[];
+  valuesRemoved: ValuePriority[];
+  valuesRetained: ValuePriority[];
+}
+
+export interface PersonaRecommendation {
+  turnNumber: number;
+  personaId: string;
+  triggerRule: TriggerRule;
+  rationale: string;
+  recommendedAt: string;
+}
+
+export interface PersonaCallEvent {
+  personaId: string;
+  source: 'learner_clicked' | 'ai_recommended_then_opened';
+  turnNumber: number;
+  recommendationTurn?: number;
+  triggerRule?: TriggerRule;
+  openLatencyMs?: number;
+  miniDialogueTurnCount: number;
+  enteredAt: string;
+  exitedAt: string;
+}
+
+export interface VocabularyEmergence {
+  term: string;
+  firstTurn: number;
+  personaJustExited?: string;
+  emergedAt: string;
+}
+
+export interface Cat100SessionMeta {
+  scenarioId: string;
+  condition: StudyCondition;
+  initialPosition: PositionInput | null;
+  closingPosition: PositionInput | null;
+  delta: PrePostDelta | null;
+  personaCallEvents: PersonaCallEvent[];
+  vocabularyEmergences: VocabularyEmergence[];
+}
