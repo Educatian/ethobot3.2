@@ -1,8 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useEthobot } from './hooks/useEthobot';
 import ActivationModal from './components/ActivationModal';
 import ChatLayout from './components/ChatLayout';
-import SessionRecoveryModal from './components/SessionRecoveryModal';
 import ProjectOverviewPage from './components/ProjectOverviewPage';
 import Cat100Page from './components/Cat100Page';
 import { Toaster, toast } from 'react-hot-toast';
@@ -11,30 +10,18 @@ import { useLanguage } from './contexts/LanguageContext';
 import { isSupabaseConfigured, supabase } from './services/supabaseClient';
 import { Session } from '@supabase/supabase-js';
 
-const App: React.FC = () => {
-  const [session, setSession] = useState<Session | null>(null);
-  const [checkingSession, setCheckingSession] = useState(true);
+const getPathname = () =>
+  typeof window === 'undefined' ? '/' : window.location.pathname;
+
+// Legacy facial-recognition shell — the one that depends on `useEthobot` and
+// the legacy Gemini-direct chat. Kept isolated so it does not run on /cat100,
+// which has its own chat client and would otherwise show a spurious
+// "AI assistant could not be initialized" toast in production.
+const LegacyEthobotApp: React.FC<{ session: Session | null; pathname: string }> = ({
+  session,
+  pathname,
+}) => {
   const { language, t } = useLanguage();
-
-  useEffect(() => {
-    if (!isSupabaseConfigured) {
-      setCheckingSession(false);
-      return;
-    }
-
-    // Check active sessions and sets the listener
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setCheckingSession(false);
-    });
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
   const ethobot = useEthobot(language);
 
   const handleActivate = (name: string, course: string) => {
@@ -52,15 +39,7 @@ const App: React.FC = () => {
 
   const isAccessGranted = Boolean(session) || ethobot.isUserActivated;
 
-  if (checkingSession) {
-    return (
-      <div className="fixed inset-0 bg-gray-50 flex items-center justify-center">
-        <div className="w-16 h-16 border-4 border-alabama-crimson border-dashed rounded-full animate-spin"></div>
-      </div>
-    );
-  }
-
-  if (typeof window !== 'undefined' && window.location.pathname === '/project-overview') {
+  if (pathname === '/project-overview') {
     return (
       <div className="font-sans bg-gray-50 text-gray-800">
         <ProjectOverviewPage
@@ -68,19 +47,6 @@ const App: React.FC = () => {
             window.location.assign('/');
           }}
           onLogClick={ethobot.logClickEvent}
-        />
-        <Toaster position="top-center" />
-      </div>
-    );
-  }
-
-  if (typeof window !== 'undefined' && window.location.pathname === '/cat100') {
-    return (
-      <div className="font-sans bg-gray-50 text-gray-800">
-        <Cat100Page
-          onBack={() => {
-            window.location.assign('/');
-          }}
         />
         <Toaster position="top-center" />
       </div>
@@ -97,6 +63,60 @@ const App: React.FC = () => {
       <Toaster position="top-center" />
     </div>
   );
+};
+
+const App: React.FC = () => {
+  const [session, setSession] = useState<Session | null>(null);
+  const [checkingSession, setCheckingSession] = useState(true);
+  const [pathname, setPathname] = useState<string>(getPathname);
+
+  useEffect(() => {
+    setPathname(getPathname());
+  }, []);
+
+  useEffect(() => {
+    if (!isSupabaseConfigured) {
+      setCheckingSession(false);
+      return;
+    }
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setCheckingSession(false);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  if (checkingSession) {
+    return (
+      <div className="fixed inset-0 bg-gray-50 flex items-center justify-center">
+        <div className="w-16 h-16 border-4 border-alabama-crimson border-dashed rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
+  // CAT 100 lives in its own routing branch with its own chat client.
+  // Crucially, we render Cat100Page WITHOUT calling useEthobot, so the legacy
+  // Gemini-direct chat init never runs on this path.
+  if (pathname === '/cat100') {
+    return (
+      <div className="font-sans">
+        <Cat100Page
+          onBack={() => {
+            window.location.assign('/');
+          }}
+        />
+        <Toaster position="top-center" />
+      </div>
+    );
+  }
+
+  return <LegacyEthobotApp session={session} pathname={pathname} />;
 };
 
 export default App;
