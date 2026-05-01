@@ -1,8 +1,6 @@
 {
   "rewrites": [
-    {
-      "source": "/project-overview",
-      "destination": "/"
-    }
+    { "source": "/project-overview", "destination": "/" },
+    { "source": "/cat100", "destination": "/" }
   ]
 }
