@@ -281,8 +281,8 @@ interface FillPositionInput {
 const fillPositionForm = async (page: Page, input: FillPositionInput) => {
   await page.getByText(input.stance, { exact: true }).click();
   await setRangeValue(page.locator('input[type="range"]').first(), input.confidence);
-  for (const value of input.values) {
-    await page.getByText(value, { exact: true }).click();
+  for (const [index, value] of input.values.entries()) {
+    await page.getByLabel(`Rank ${value}`).selectOption(String(index + 1));
   }
 };
 
@@ -299,7 +299,7 @@ const openPersonaAndCompleteMiniDialogue = async (
   await expect(card).toHaveAttribute('data-state', 'active');
   await readingPause(page, 250); // student "reads" persona's self-intro
 
-  const chatInput = page.locator('input[placeholder]').first();
+  const chatInput = page.locator('textarea[placeholder]').first();
   const turns = [studentLines.t1, studentLines.t2, studentLines.t3 ?? "OK, that's helpful — thanks."];
   for (const line of turns) {
     const stateBefore = await card.getAttribute('data-state');
@@ -395,7 +395,7 @@ test.describe('Learner-directed (LD) — proposal-faithful student journey', () 
     await expect(page.getByText(/leaning toward adopting/i)).toBeVisible();
     await page.screenshot({ path: 'test-results/ld-a-03-opening.png', fullPage: true });
 
-    const chatInput = page.locator('input[placeholder]').first();
+    const chatInput = page.locator('textarea[placeholder]').first();
     await studentType(chatInput, "It's hard to notice every student in a large class.");
     await chatInput.press('Enter');
     await expect(page.getByText(/equitably across every student/i)).toBeVisible();
@@ -583,7 +583,7 @@ test.describe('AR condition — recommendation engine (Wave 3 12-15)', () => {
     await page.getByRole('button', { name: /Start the dialogue/i }).click();
     await expect(page.getByText(/leaning toward adopting/i)).toBeVisible();
 
-    const chatInput = page.locator('input[placeholder]').first();
+    const chatInput = page.locator('textarea[placeholder]').first();
 
     // Four learner turns referencing ONLY the teacher persona — should trip Rule 1
     const teacherOnlyTurns = [
@@ -641,7 +641,7 @@ test.describe('AR condition — recommendation engine (Wave 3 12-15)', () => {
     await page.getByRole('button', { name: /Start the dialogue/i }).click();
     await expect(page.getByText(/leaning toward adopting/i)).toBeVisible();
 
-    const chatInput = page.locator('input[placeholder]').first();
+    const chatInput = page.locator('textarea[placeholder]').first();
 
     // Drive 4 teacher-only turns to fire Rule 1
     for (const t of [
@@ -700,18 +700,17 @@ test.describe('Form validation (proposal initial / closing position module)', ()
     await page.getByText('Support', { exact: true }).click();
     await expect(submit).toBeDisabled(); // stance set, no values yet
 
-    await page.getByText('Privacy', { exact: true }).click();
+    await page.getByLabel('Rank Privacy').selectOption('1');
     await expect(submit).toBeEnabled();
 
     // Add up to 4 values, then verify a 5th option becomes non-clickable
-    await page.getByText('Safety', { exact: true }).click();
-    await page.getByText('Autonomy', { exact: true }).click();
-    await page.getByText('Accountability', { exact: true }).click();
+    await page.getByLabel('Rank Safety').selectOption('2');
+    await page.getByLabel('Rank Autonomy').selectOption('3');
+    await page.getByLabel('Rank Accountability').selectOption('4');
 
     // 5th attempt should be capped — 'Well-being' checkbox should be disabled.
-    const wellBeing = page.locator('label', { hasText: 'Well-being' });
-    const wellBeingInput = wellBeing.locator('input[type="checkbox"]');
-    await expect(wellBeingInput).toBeDisabled();
+    const wellBeingRank = page.getByLabel('Rank Well-being');
+    await expect(wellBeingRank).toBeDisabled();
   });
 });
 
@@ -878,7 +877,7 @@ test.describe('AR rules 2 and 3 — coverage beyond Rule 1', () => {
     await page.getByRole('button', { name: /Start the dialogue/i }).click();
     await expect(page.getByText(/leaning toward adopting/i)).toBeVisible();
 
-    const chatInput = page.locator('input[placeholder]').first();
+    const chatInput = page.locator('textarea[placeholder]').first();
     // All four turns reference multiple stakeholders (teacher + student + parent)
     // but only one value lens (privacy). Rule 1 should NOT fire; Rule 2 should.
     for (const t of [
@@ -915,7 +914,7 @@ test.describe('AR rules 2 and 3 — coverage beyond Rule 1', () => {
     await page.getByRole('button', { name: /Start the dialogue/i }).click();
     await expect(page.getByText(/leaning toward adopting/i)).toBeVisible();
 
-    const chatInput = page.locator('input[placeholder]').first();
+    const chatInput = page.locator('textarea[placeholder]').first();
     // Multiple stakeholders + multiple value lenses, but no conditional
     // reasoning and no concrete evidence. Rule 3 should fire.
     for (const t of [
@@ -1073,7 +1072,7 @@ test.describe('Persona invocation edge cases', () => {
     await page.getByRole('button', { name: /Start the dialogue/i }).click();
     await expect(page.getByText(/leaning toward adopting/i)).toBeVisible();
 
-    const chatInput = page.locator('input[placeholder]').first();
+    const chatInput = page.locator('textarea[placeholder]').first();
     const before = await page.locator('[data-action="open-persona"]').count();
     await chatInput.click();
     await chatInput.press('Enter'); // empty
@@ -1222,7 +1221,7 @@ test.describe('Vocabulary emergence — coverage', () => {
     await page.getByRole('button', { name: /Start the dialogue/i }).click();
     await expect(page.getByText(/leaning toward adopting/i)).toBeVisible();
 
-    const chatInput = page.locator('input[placeholder]').first();
+    const chatInput = page.locator('textarea[placeholder]').first();
     const turns = [
       'I think dignity matters here for students.',
       'Consent should come before any data collection.',
@@ -1280,7 +1279,7 @@ test.describe('Vocabulary emergence — coverage', () => {
     await page.getByRole('button', { name: /Start the dialogue/i }).click();
     await expect(page.getByText(/leaning toward adopting/i)).toBeVisible();
 
-    const chatInput = page.locator('input[placeholder]').first();
+    const chatInput = page.locator('textarea[placeholder]').first();
     for (const t of [
       'Dignity is what I care about most.',
       'Dignity, dignity — it is the heart of this.',
@@ -1342,7 +1341,7 @@ test.describe('Scenario B — additional coverage', () => {
     await page.getByRole('button', { name: /Start the dialogue/i }).click();
     await expect(page.getByText(/leaning toward adopting/i)).toBeVisible();
 
-    const chatInput = page.locator('input[placeholder]').first();
+    const chatInput = page.locator('textarea[placeholder]').first();
     // 4 student-only turns to fire Rule 1 in scenario B
     for (const t of [
       'The students love this app — that is what matters.',

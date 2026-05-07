@@ -43,8 +43,11 @@ const PositionInputForm: React.FC<PositionInputFormProps> = ({
     initial?.stance ?? null
   );
   const [confidence, setConfidence] = useState<number>(initial?.confidence ?? 50);
-  const [selectedValues, setSelectedValues] = useState<ValuePriority[]>(
-    initial?.values ?? []
+  const [rankedValues, setRankedValues] = useState<Partial<Record<ValuePriority, number>>>(() =>
+    (initial?.values ?? []).reduce<Partial<Record<ValuePriority, number>>>((acc, value, index) => {
+      acc[value] = index + 1;
+      return acc;
+    }, {})
   );
 
   const orderedOptions = useMemo(
@@ -52,11 +55,33 @@ const PositionInputForm: React.FC<PositionInputFormProps> = ({
     [valueOptions]
   );
 
-  const toggleValue = (value: ValuePriority) => {
-    setSelectedValues(prev => {
-      if (prev.includes(value)) return prev.filter(v => v !== value);
-      if (prev.length >= maxValues) return prev;
-      return [...prev, value];
+  const selectedValues = useMemo(
+    () =>
+      orderedOptions
+        .filter(value => rankedValues[value] !== undefined)
+        .sort((a, b) => (rankedValues[a] ?? 99) - (rankedValues[b] ?? 99)),
+    [orderedOptions, rankedValues]
+  );
+
+  const usedRanks = useMemo(
+    () => new Set(Object.values(rankedValues).filter((rank): rank is number => typeof rank === 'number')),
+    [rankedValues]
+  );
+
+  const setValueRank = (value: ValuePriority, rank: number | null) => {
+    setRankedValues(prev => {
+      const next = { ...prev };
+      if (rank === null) {
+        delete next[value];
+        return next;
+      }
+      Object.entries(next).forEach(([key, existingRank]) => {
+        if (existingRank === rank && key !== value) {
+          delete next[key as ValuePriority];
+        }
+      });
+      next[value] = rank;
+      return next;
     });
   };
 
@@ -129,34 +154,45 @@ const PositionInputForm: React.FC<PositionInputFormProps> = ({
 
       <fieldset>
         <legend className="text-sm font-semibold text-lyceum-ink mb-2 uppercase tracking-wide">
-          Which values matter most here?{' '}
+          Rank your value priorities{' '}
           <span className="text-xs font-normal text-lyceum-muted normal-case tracking-normal">
-            (choose {minValues}–{maxValues})
+            (rank {minValues}-{maxValues}; 1 = most important)
           </span>
         </legend>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
           {orderedOptions.map(value => {
-            const checked = selectedValues.includes(value);
-            const atCapacity = !checked && selectedValues.length >= maxValues;
+            const rank = rankedValues[value] ?? '';
+            const atCapacity = rank === '' && selectedValues.length >= maxValues;
             return (
               <label
                 key={value}
-                className={`flex items-center gap-2 px-3 py-2 rounded border text-sm cursor-pointer transition-colors ${
-                  checked
+                className={`flex items-center justify-between gap-3 px-3 py-2 rounded border text-sm transition-colors ${
+                  rank !== ''
                     ? 'border-alabama-crimson bg-crimson-light text-lyceum-ink'
                     : atCapacity
                     ? 'border-lyceum-line bg-lyceum-paper-deep text-lyceum-muted cursor-not-allowed'
                     : 'border-lyceum-line bg-lyceum-paper/95 text-lyceum-ink hover:border-alabama-crimson/60'
                 }`}
               >
-                <input
-                  type="checkbox"
-                  className="accent-alabama-crimson"
-                  checked={checked}
+                <span>{valueLabel[value]}</span>
+                <select
+                  aria-label={`Rank ${valueLabel[value]}`}
+                  value={rank}
                   disabled={atCapacity}
-                  onChange={() => toggleValue(value)}
-                />
-                {valueLabel[value]}
+                  onChange={e => setValueRank(value, e.target.value ? Number(e.target.value) : null)}
+                  className="h-8 w-16 rounded border border-lyceum-line bg-white px-2 text-sm font-mono text-lyceum-ink disabled:bg-lyceum-paper-deep"
+                >
+                  <option value="">--</option>
+                  {Array.from({ length: maxValues }, (_, index) => index + 1).map(optionRank => (
+                    <option
+                      key={optionRank}
+                      value={optionRank}
+                      disabled={usedRanks.has(optionRank) && rank !== optionRank}
+                    >
+                      {optionRank}
+                    </option>
+                  ))}
+                </select>
               </label>
             );
           })}

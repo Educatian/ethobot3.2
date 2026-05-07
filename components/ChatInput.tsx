@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { SendIcon } from './icons';
 import { useLanguage } from '../contexts/LanguageContext';
 
@@ -10,7 +10,15 @@ interface ChatInputProps {
 
 const ChatInput: React.FC<ChatInputProps> = ({ onSend, isLoading, onLogClick }) => {
   const [text, setText] = useState('');
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const { t } = useLanguage();
+
+  useEffect(() => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+    textarea.style.height = 'auto';
+    textarea.style.height = `${Math.min(textarea.scrollHeight, 180)}px`;
+  }, [text]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -20,15 +28,24 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSend, isLoading, onLogClick }) 
     }
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSubmit(e);
+    }
+  };
+
   return (
     <div className="flex-shrink-0 border-t border-lyceum-line/70 bg-lyceum-paper/90 px-4 py-4 backdrop-blur sm:px-8">
-      <form onSubmit={handleSubmit} className="mx-auto flex max-w-5xl items-center gap-3 sm:gap-5">
-        <input
-          type="text"
+      <form onSubmit={handleSubmit} className="mx-auto flex max-w-5xl items-end gap-3 sm:gap-5">
+        <textarea
+          ref={textareaRef}
           value={text}
           onChange={(e) => setText(e.target.value)}
+          onKeyDown={handleKeyDown}
           placeholder={t('inputPlaceholder')}
-          className="h-14 flex-1 rounded-full border border-lyceum-line bg-white/90 px-6 text-sm text-lyceum-ink shadow-inner outline-none transition focus:border-lyceum-accent focus:ring-2 focus:ring-lyceum-accent/20"
+          rows={3}
+          className="min-h-24 max-h-44 flex-1 resize-none rounded-2xl border border-lyceum-line bg-white/90 px-5 py-3 text-sm leading-relaxed text-lyceum-ink shadow-inner outline-none transition focus:border-lyceum-accent focus:ring-2 focus:ring-lyceum-accent/20"
           disabled={isLoading}
         />
         <button

@@ -102,7 +102,9 @@ const fillPosition = async (
 ) => {
   await page.getByText(stance, { exact: true }).click();
   await setRangeValue(page, confidence);
-  for (const v of values) await page.getByText(v, { exact: true }).click();
+  for (const [index, value] of values.entries()) {
+    await page.getByLabel(`Rank ${value}`).selectOption(String(index + 1));
+  }
 };
 
 const shot = async (page: Page, name: string) => {
@@ -110,7 +112,7 @@ const shot = async (page: Page, name: string) => {
 };
 
 const slowType = async (page: Page, text: string) => {
-  const input = page.locator('input[placeholder]').first();
+  const input = page.locator('textarea[placeholder]').first();
   await input.click();
   await input.fill('');
   await input.pressSequentially(text, { delay: 18 });
@@ -144,12 +146,12 @@ test('LD learning-journey screenshots', async ({ page }) => {
 
   // 05 — Two facilitator probe turns
   await slowType(page, "It's hard to notice every student in a large class.");
-  await page.locator('input[placeholder]').first().press('Enter');
+  await page.locator('textarea[placeholder]').first().press('Enter');
   await page.getByText(/equitably across every student/i).waitFor();
   await shot(page, '05-facilitator-probe-1');
 
   await slowType(page, 'I want to support every student equitably with this tool.');
-  await page.locator('input[placeholder]').first().press('Enter');
+  await page.locator('textarea[placeholder]').first().press('Enter');
   await page.getByText(/even-handed in practice/i).waitFor();
   await shot(page, '06-facilitator-probe-2');
 
@@ -160,13 +162,13 @@ test('LD learning-journey screenshots', async ({ page }) => {
 
   // 07 — Mini-dialogue with Jordan (turn 1)
   await slowType(page, "That's not what I expected to hear.");
-  await page.locator('input[placeholder]').first().press('Enter');
+  await page.locator('textarea[placeholder]').first().press('Enter');
   await page.getByText(/Some of my friends forget/i).waitFor();
   await shot(page, '08-jordan-turn-1');
 
   // 08 — Last turn → auto-exit + facilitator return
   await slowType(page, 'It sounds like the watching changes things.');
-  await page.locator('input[placeholder]').first().press('Enter');
+  await page.locator('textarea[placeholder]').first().press('Enter');
   await page.getByText(/keep my face neutral/i).waitFor();
   await page.getByText(/surveillance reshapes student behavior/i).waitFor();
   await shot(page, '09-jordan-exited-facilitator-return');
@@ -177,11 +179,11 @@ test('LD learning-journey screenshots', async ({ page }) => {
   await shot(page, '10-mr-park-joined');
 
   await slowType(page, 'I think educational benefit needs to be weighed.');
-  await page.locator('input[placeholder]').first().press('Enter');
+  await page.locator('textarea[placeholder]').first().press('Enter');
   await page.getByText(/can't legally consent/i).waitFor();
 
   await slowType(page, 'If there had been proper notification, my answer might be different.');
-  await page.locator('input[placeholder]').first().press('Enter');
+  await page.locator('textarea[placeholder]').first().press('Enter');
   await page.getByText(/different conversation/i).waitFor();
   await page.getByText(/consent and authority/i).waitFor();
   await shot(page, '11-mr-park-exited-facilitator-return');
@@ -229,7 +231,7 @@ test('AR Rule-1 screenshots', async ({ page }) => {
     'I think the teacher gets the most benefit from this tool.',
   ]) {
     await slowType(page, t);
-    await page.locator('input[placeholder]').first().press('Enter');
+    await page.locator('textarea[placeholder]').first().press('Enter');
     await page.waitForTimeout(400);
   }
 

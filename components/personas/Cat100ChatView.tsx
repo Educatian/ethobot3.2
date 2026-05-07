@@ -183,6 +183,7 @@ const Cat100ChatView: React.FC<Cat100ChatViewProps> = ({
             persona={persona}
             state={personaCardState(persona)}
             onOpen={onCardOpen}
+            showNudge={condition === StudyCondition.LEARNER_DIRECTED}
           />
         ))}
       </aside>

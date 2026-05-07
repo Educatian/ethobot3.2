@@ -128,6 +128,7 @@ const Cat100Page: React.FC<Cat100PageProps> = ({ onBack }) => {
   const [initialPosition, setInitialPosition] = useState<PositionInput | null>(null);
   const [closingPosition, setClosingPosition] = useState<PositionInput | null>(null);
   const [delta, setDelta] = useState<PrePostDelta | null>(null);
+  const [closingReflection, setClosingReflection] = useState('');
   const { language } = useLanguage();
 
   const sessionStartTimeRef = useRef<number>(Date.now());
@@ -209,15 +210,17 @@ const Cat100Page: React.FC<Cat100PageProps> = ({ onBack }) => {
     setPhase('chat');
   };
 
-  const handlePostFormSubmit = (position: PositionInput, computedDelta: PrePostDelta) => {
+  const handlePostFormSubmit = (position: PositionInput, computedDelta: PrePostDelta, reflection: string) => {
     setClosingPosition(position);
     setDelta(computedDelta);
+    setClosingReflection(reflection);
     if (activeScenario && initialPosition && logContext) {
       logCat100Event('CAT100_CLOSING_POSITION', logContext, {
         scenarioId: activeScenario.id,
         condition: condition ?? StudyCondition.LEARNER_DIRECTED,
         closingPosition: position,
         delta: computedDelta,
+        extra: { closingReflection: reflection },
       });
       logCat100Event('CAT100_SESSION_COMPLETE', logContext, {
         scenarioId: activeScenario.id,
@@ -225,6 +228,7 @@ const Cat100Page: React.FC<Cat100PageProps> = ({ onBack }) => {
         initialPosition,
         closingPosition: position,
         delta: computedDelta,
+        extra: { closingReflection: reflection },
       });
     }
     setPhase('debrief');
@@ -303,6 +307,12 @@ const Cat100Page: React.FC<Cat100PageProps> = ({ onBack }) => {
           <p className="text-lyceum-ink/85">
             <span className="font-semibold text-lyceum-ink">Delta: </span>
             {summarizeDelta(delta)}
+          </p>
+        )}
+        {closingReflection && (
+          <p className="text-lyceum-ink/85">
+            <span className="font-semibold text-lyceum-ink">Reflection: </span>
+            {closingReflection}
           </p>
         )}
       </div>

@@ -1,4 +1,5 @@
 import React from 'react';
+import { Bell, Check, UserRound } from 'lucide-react';
 import type { Persona } from '../../types';
 
 interface PersonaPanelCardProps {
@@ -6,6 +7,7 @@ interface PersonaPanelCardProps {
   state?: 'idle' | 'highlighted' | 'active' | 'completed' | 'disabled';
   onOpen?: (persona: Persona) => void;
   rationale?: string;
+  showNudge?: boolean;
 }
 
 const stateClasses: Record<NonNullable<PersonaPanelCardProps['state']>, string> = {
@@ -21,9 +23,11 @@ const PersonaPanelCard: React.FC<PersonaPanelCardProps> = ({
   state = 'idle',
   onOpen,
   rationale,
+  showNudge = false,
 }) => {
   const interactive = state !== 'disabled' && typeof onOpen === 'function';
   const showOpenButton = interactive && (state === 'idle' || state === 'highlighted');
+  const showNotification = showNudge && state === 'idle';
 
   const handleClick = () => {
     if (interactive) onOpen?.(persona);
@@ -31,14 +35,24 @@ const PersonaPanelCard: React.FC<PersonaPanelCardProps> = ({
 
   return (
     <article
-      className={`rounded-lg border p-4 transition-colors ${stateClasses[state]}`}
+      className={`relative rounded-lg border p-4 transition-colors ${stateClasses[state]}`}
       aria-disabled={!interactive}
       data-persona-id={persona.id}
       data-state={state}
     >
-      <header className="mb-2">
-        <h3 className="text-base font-headline font-semibold leading-tight text-lyceum-ink">{persona.name}</h3>
-        <p className="text-[11px] uppercase tracking-wider text-lyceum-muted mt-0.5">{persona.role}</p>
+      {showNotification && (
+        <span className="absolute right-3 top-3 inline-flex h-6 min-w-6 items-center justify-center rounded-full bg-alabama-crimson px-1.5 text-[11px] font-bold text-white shadow-ambient">
+          <Bell className="h-3.5 w-3.5" aria-hidden="true" />
+        </span>
+      )}
+      <header className="mb-2 flex items-start gap-3 pr-8">
+        <span className="mt-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-alabama-crimson/30 bg-white text-alabama-crimson">
+          {state === 'completed' ? <Check className="h-4 w-4" aria-hidden="true" /> : <UserRound className="h-4 w-4" aria-hidden="true" />}
+        </span>
+        <div>
+          <h3 className="text-base font-headline font-semibold leading-tight text-lyceum-ink">{persona.name}</h3>
+          <p className="text-[11px] uppercase tracking-wider text-lyceum-muted mt-0.5">{persona.role}</p>
+        </div>
       </header>
       <p className="text-sm text-lyceum-ink/85 leading-snug">{persona.shortDescription}</p>
 
@@ -50,15 +64,15 @@ const PersonaPanelCard: React.FC<PersonaPanelCardProps> = ({
         <button
           type="button"
           onClick={handleClick}
-          className="mt-3 inline-flex items-center text-xs font-semibold text-alabama-crimson hover:text-crimson-dark transition-colors"
+          className="mt-3 inline-flex items-center rounded-full border border-alabama-crimson/30 bg-white px-3 py-1.5 text-xs font-semibold text-alabama-crimson hover:border-alabama-crimson hover:bg-crimson-light transition-colors"
           data-action="open-persona"
         >
-          Open →
+          Open voice
         </button>
       )}
 
       {state === 'active' && (
-        <p className="mt-3 text-xs font-semibold text-alabama-crimson uppercase tracking-wide">In conversation…</p>
+        <p className="mt-3 text-xs font-semibold text-alabama-crimson uppercase tracking-wide">In conversation...</p>
       )}
 
       {state === 'completed' && (

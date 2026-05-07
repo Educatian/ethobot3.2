@@ -10,6 +10,15 @@ const SMOKE_CODE = '9b4402'; // P001 → LD-A in cat100-codes.json
 test.use({ baseURL: PROD });
 test.setTimeout(120_000);
 
+const chooseValue = async (page: any, label: string, rank: string) => {
+  const rankInput = page.getByLabel(`Rank ${label}`);
+  if ((await rankInput.count()) > 0) {
+    await rankInput.selectOption(rank);
+    return;
+  }
+  await page.getByText(label, { exact: true }).click();
+};
+
 test('production-smoke: gate → code → first ETHOBOT reply via OpenRouter', async ({ page }) => {
   await page.goto('/cat100');
 
@@ -39,8 +48,8 @@ test('production-smoke: gate → code → first ETHOBOT reply via OpenRouter', a
     el.dispatchEvent(new Event('input', { bubbles: true }));
     el.dispatchEvent(new Event('change', { bubbles: true }));
   }, '80');
-  await page.getByText('Safety', { exact: true }).click();
-  await page.getByText('Accountability', { exact: true }).click();
+  await chooseValue(page, 'Safety', '1');
+  await chooseValue(page, 'Accountability', '2');
   await page.getByRole('button', { name: /Start the dialogue/i }).click();
 
   // First ETHOBOT facilitator message arrives via OpenRouter → real Gemini.
