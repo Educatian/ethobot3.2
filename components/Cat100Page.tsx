@@ -73,6 +73,8 @@ interface ResolvedIdentity {
   condition: StudyCondition | null;
   scenarioId: string | null;
   source: 'url' | 'code' | 'localStorage' | 'anonymous';
+  email?: string;
+  name?: string;
 }
 
 const readSessionIdentity = (): Cat100Identity | null => {
@@ -112,6 +114,8 @@ const fromIdentity = (identity: Cat100Identity): ResolvedIdentity => ({
   scenarioId:
     COURSE_CONFIG[normalizeCourse(identity.course)].scenarioIds[identity.scenario === 'a' ? 0 : 1],
   source: identity.source,
+  email: identity.email,
+  name: identity.name,
 });
 
 const fromUrlParams = (): ResolvedIdentity | null => {
@@ -189,6 +193,8 @@ const Cat100Page: React.FC<Cat100PageProps> = ({ onBack, mode = 'cat100' }) => {
       userFullName: identity.participantId,
       course: identity.course,
       sessionId: sessionStartTimeRef.current,
+      email: identity.email,
+      name: identity.name,
     };
   }, [identity]);
 
@@ -277,6 +283,7 @@ const Cat100Page: React.FC<Cat100PageProps> = ({ onBack, mode = 'cat100' }) => {
       Course: courseKey,
       condition: conditionCode,
       scenario: scenarioIdParam ?? '',
+      email: identity?.email ?? '',
     });
     window.location.assign(`${CAT_SURVEY_URL}?${qs.toString()}`);
   };

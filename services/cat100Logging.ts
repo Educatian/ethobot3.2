@@ -42,6 +42,8 @@ export interface Cat100LogContext {
   userFullName: string;
   course: string;
   sessionId: number | null;
+  email?: string;
+  name?: string;
 }
 
 const SHEETS_API_URL = 'https://sheets-api-function-515497328571.europe-west1.run.app/';
@@ -75,7 +77,7 @@ const insertIntoCat100Events = async (
           scenario_id: payload.scenarioId ?? null,
           condition: payload.condition ?? null,
           event_type: eventType,
-          details_json: payload,
+          details_json: { ...payload, email: context.email, name: context.name },
         },
       ]);
     if (error) {
@@ -104,9 +106,11 @@ export const logCat100Event = (
     logType: eventType,
     userName: context.userFullName,
     userCourse: context.course,
+    userEmail: context.email ?? null,
+    userRealName: context.name ?? null,
     userMessage: null,
     botResponse: null,
-    details_json: { ...payload, sessionId: context.sessionId },
+    details_json: { ...payload, sessionId: context.sessionId, email: context.email, name: context.name },
   });
 
   // 3) Supabase cat100_events — anon-insert RLS allows URL-based participants
@@ -124,9 +128,11 @@ export const logCat100MessageExchange = (
     logType: 'CAT100_MESSAGE_EXCHANGE',
     userName: context.userFullName,
     userCourse: context.course,
+    userEmail: context.email ?? null,
+    userRealName: context.name ?? null,
     userMessage,
     botResponse,
-    details_json: { ...payload, sessionId: context.sessionId },
+    details_json: { ...payload, sessionId: context.sessionId, email: context.email, name: context.name },
   });
 
   void insertIntoCat100Events('CAT100_PERSONA_TURN' as Cat100EventType, context, {

@@ -15,13 +15,22 @@ const COURSES: { value: string; label: string }[] = [
 
 const pick = <T,>(arr: readonly T[]): T => arr[Math.floor(Math.random() * arr.length)];
 
-const genPid = (course: string) =>
-  `${course.toLowerCase()}-${Math.random().toString(36).slice(2, 8)}`;
+// Deterministic pid from email (djb2) so the SAME student always resolves to the
+// SAME participant id — stable across re-entry and joinable to PRE survey (email),
+// chat logs (pid), and POST survey (pid). Not random.
+const hashEmail = (email: string): string => {
+  const s = email.trim().toLowerCase();
+  let h = 5381;
+  for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) >>> 0;
+  return h.toString(36).padStart(7, '0').slice(0, 8);
+};
+const pidFromEmail = (course: string, email: string) => `${course.toLowerCase()}-${hashEmail(email)}`;
 
 const UniversalGate: React.FC<UniversalGateProps> = ({ onAccept }) => {
   const [course, setCourse] = useState('');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [consent, setConsent] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -35,6 +44,10 @@ const UniversalGate: React.FC<UniversalGateProps> = ({ onAccept }) => {
       setError('Please enter your name and UA email.');
       return;
     }
+    if (!consent) {
+      setError('Please confirm your consent to participate before beginning.');
+      return;
+    }
     const params =
       typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : new URLSearchParams();
     const condRaw = params.get('condition');
@@ -45,7 +58,7 @@ const UniversalGate: React.FC<UniversalGateProps> = ({ onAccept }) => {
       scenRaw === 'a' || scenRaw === 'b' ? scenRaw : pick(['a', 'b'] as const);
 
     onAccept({
-      pid: genPid(course),
+      pid: pidFromEmail(course, email),
       condition,
       scenario,
       course,
@@ -140,6 +153,26 @@ const UniversalGate: React.FC<UniversalGateProps> = ({ onAccept }) => {
             <p className="mt-2 text-xs text-lyceum-muted">
               Used only to link your activity and survey responses; kept confidential.
             </p>
+          </div>
+
+          <div className="rounded border border-lyceum-line bg-lyceum-paper-soft p-3">
+            <label className="flex items-start gap-2 text-xs text-lyceum-ink/85 leading-relaxed cursor-pointer">
+              <input
+                type="checkbox"
+                checked={consent}
+                onChange={e => {
+                  setConsent(e.target.checked);
+                  setError(null);
+                }}
+                className="mt-0.5 accent-alabama-crimson"
+              />
+              <span>
+                I am 18 or older and voluntarily agree to participate in this research study
+                (IRB #26-01-9308; PI: Dr. Jewoong Moon, jmoon19@ua.edu). Participation will not
+                affect my grade, and I may stop at any time. My interaction data and survey
+                responses may be used for research.
+              </span>
+            </label>
           </div>
 
           {error && (
