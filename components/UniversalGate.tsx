@@ -13,17 +13,16 @@ const COURSES: { value: string; label: string }[] = [
   { value: 'CAT531', label: 'CAT 531 — Computer-Based Instruction' },
 ];
 
-const pick = <T,>(arr: readonly T[]): T => arr[Math.floor(Math.random() * arr.length)];
-
 // Deterministic pid from email (djb2) so the SAME student always resolves to the
 // SAME participant id — stable across re-entry and joinable to PRE survey (email),
 // chat logs (pid), and POST survey (pid). Not random.
-const hashEmail = (email: string): string => {
-  const s = email.trim().toLowerCase();
+const hashInt = (s: string): number => {
   let h = 5381;
   for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) >>> 0;
-  return h.toString(36).padStart(7, '0').slice(0, 8);
+  return h >>> 0;
 };
+const hashEmail = (email: string): string =>
+  hashInt(email.trim().toLowerCase()).toString(36).padStart(7, '0').slice(0, 8);
 const pidFromEmail = (course: string, email: string) => `${course.toLowerCase()}-${hashEmail(email)}`;
 
 const UniversalGate: React.FC<UniversalGateProps> = ({ onAccept }) => {
@@ -52,10 +51,17 @@ const UniversalGate: React.FC<UniversalGateProps> = ({ onAccept }) => {
       typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : new URLSearchParams();
     const condRaw = params.get('condition');
     const scenRaw = params.get('scenario');
+    // Deterministic, ~balanced 2x2 cell assignment from email (stable on re-entry;
+    // distributes ld-a / ld-b / ar-a / ar-b roughly evenly). URL params override
+    // for researcher/test runs. (True equal-N counterbalancing would need a
+    // server-side counter; this is the stateless, reproducible approximation.)
+    const cell = hashInt(email.trim().toLowerCase() + '|cell') % 4;
+    const cellCondition: 'ld' | 'ar' = cell < 2 ? 'ld' : 'ar';
+    const cellScenario: 'a' | 'b' = cell % 2 === 0 ? 'a' : 'b';
     const condition: 'ld' | 'ar' =
-      condRaw === 'ld' || condRaw === 'ar' ? condRaw : pick(['ld', 'ar'] as const);
+      condRaw === 'ld' || condRaw === 'ar' ? condRaw : cellCondition;
     const scenario: 'a' | 'b' =
-      scenRaw === 'a' || scenRaw === 'b' ? scenRaw : pick(['a', 'b'] as const);
+      scenRaw === 'a' || scenRaw === 'b' ? scenRaw : cellScenario;
 
     onAccept({
       pid: pidFromEmail(course, email),
