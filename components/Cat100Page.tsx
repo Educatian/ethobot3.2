@@ -16,11 +16,37 @@ import {
   logCat100Event,
   type Cat100LogContext,
 } from '../services/cat100Logging';
+import UniversalGate from './UniversalGate';
+
+// Qualtrics POST survey (AI-Enhanced Multimedia Learning). Identity is passed
+// so the survey opens pre-matched: PID links session/log <-> survey; Course
+// routes the survey's course module.
+const CAT_SURVEY_URL = 'https://az1.qualtrics.com/jfe/form/SV_e4DQXWu2fl5OHl4';
 
 const SESSION_KEY = 'cat100_session';
 
+type CourseKey = 'CAT100' | 'CAT531';
+const normalizeCourse = (course: string | undefined): CourseKey =>
+  course && /531/.test(course) ? 'CAT531' : 'CAT100';
+const COURSE_CONFIG: Record<
+  CourseKey,
+  { scenariosUrl: string; scenarioIds: [string, string]; label: string }
+> = {
+  CAT100: {
+    scenariosUrl: '/data/scenarios.json',
+    scenarioIds: ['scenario_a_classroom_monitoring', 'scenario_b_edtech_data_sharing'],
+    label: 'CAT 100',
+  },
+  CAT531: {
+    scenariosUrl: '/data/scenarios-cat531.json',
+    scenarioIds: ['scenario_a_ai_grading', 'scenario_b_genai_content'],
+    label: 'CAT 531',
+  },
+};
+
 interface Cat100PageProps {
   onBack: () => void;
+  mode?: 'cat100' | 'universal';
 }
 
 type Phase = 'intro' | 'pre' | 'chat' | 'post' | 'debrief';
@@ -83,7 +109,8 @@ const fromIdentity = (identity: Cat100Identity): ResolvedIdentity => ({
   course: identity.course,
   condition:
     identity.condition === 'ld' ? StudyCondition.LEARNER_DIRECTED : StudyCondition.AI_RECOMMENDED,
-  scenarioId: identity.scenario === 'a' ? 'scenario_a_classroom_monitoring' : 'scenario_b_edtech_data_sharing',
+  scenarioId:
+    COURSE_CONFIG[normalizeCourse(identity.course)].scenarioIds[identity.scenario === 'a' ? 0 : 1],
   source: identity.source,
 });
 
@@ -121,7 +148,7 @@ const fromUrlParams = (): ResolvedIdentity | null => {
   return null;
 };
 
-const Cat100Page: React.FC<Cat100PageProps> = ({ onBack }) => {
+const Cat100Page: React.FC<Cat100PageProps> = ({ onBack, mode = 'cat100' }) => {
   const [scenarios, setScenarios] = useState<Scenario[] | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [phase, setPhase] = useState<Phase>('intro');
@@ -165,9 +192,12 @@ const Cat100Page: React.FC<Cat100PageProps> = ({ onBack }) => {
     };
   }, [identity]);
 
+  const courseScenariosUrl = COURSE_CONFIG[normalizeCourse(identity?.course)].scenariosUrl;
+
   useEffect(() => {
     let cancelled = false;
-    fetch('/data/scenarios.json')
+    setScenarios(null);
+    fetch(courseScenariosUrl)
       .then(res => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         return res.json();
@@ -181,7 +211,7 @@ const Cat100Page: React.FC<Cat100PageProps> = ({ onBack }) => {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [courseScenariosUrl]);
 
   const activeScenario = useMemo(() => {
     if (!scenarios) return null;
@@ -232,6 +262,23 @@ const Cat100Page: React.FC<Cat100PageProps> = ({ onBack }) => {
       });
     }
     setPhase('debrief');
+  };
+
+  const goToSurvey = () => {
+    const courseKey = normalizeCourse(identity?.course);
+    const conditionCode =
+      condition === StudyCondition.AI_RECOMMENDED
+        ? 'ar'
+        : condition === StudyCondition.LEARNER_DIRECTED
+        ? 'ld'
+        : '';
+    const qs = new URLSearchParams({
+      PID: identity?.participantId ?? '',
+      Course: courseKey,
+      condition: conditionCode,
+      scenario: scenarioIdParam ?? '',
+    });
+    window.location.assign(`${CAT_SURVEY_URL}?${qs.toString()}`);
   };
 
   const renderIntro = (scenario: Scenario) => (
@@ -318,17 +365,28 @@ const Cat100Page: React.FC<Cat100PageProps> = ({ onBack }) => {
       </div>
       <button
         type="button"
+        onClick={goToSurvey}
+        className="mt-6 w-full py-3 rounded bg-alabama-crimson text-white text-sm font-semibold tracking-wide hover:bg-crimson-dark transition-colors shadow-ambient"
+      >
+        Next page →
+      </button>
+      <button
+        type="button"
         onClick={onBack}
-        className="mt-6 w-full py-2.5 rounded border border-lyceum-line text-sm text-lyceum-ink hover:bg-lyceum-paper-deep transition-colors"
+        className="mt-3 w-full py-2.5 rounded border border-lyceum-line text-sm text-lyceum-ink hover:bg-lyceum-paper-deep transition-colors"
       >
         Back to ETHOBOT
       </button>
     </section>
   );
 
-  // Gate: no identity yet → show access-code form before anything else.
+  // Gate: no identity yet → universal course-select gate or CAT100 access-code gate.
   if (!identity) {
-    return <Cat100GatePage onAccept={handleGateAccept} />;
+    return mode === 'universal' ? (
+      <UniversalGate onAccept={handleGateAccept} />
+    ) : (
+      <Cat100GatePage onAccept={handleGateAccept} />
+    );
   }
 
   return (
@@ -340,7 +398,9 @@ const Cat100Page: React.FC<Cat100PageProps> = ({ onBack }) => {
         >
           ← Back to ETHOBOT
         </button>
-        <h1 className="text-3xl font-headline font-semibold mb-2 text-lyceum-ink">CAT 100 — Persona Dialogue</h1>
+        <h1 className="text-3xl font-headline font-semibold mb-2 text-lyceum-ink">
+          {COURSE_CONFIG[normalizeCourse(identity.course)].label} — Persona Dialogue
+        </h1>
         <p className="text-sm text-lyceum-muted mb-2">
           Phase: <span className="font-mono">{phase}</span> · Condition:{' '}
           <span className="font-mono">{conditionLabel}</span>

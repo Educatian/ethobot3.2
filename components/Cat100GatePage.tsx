@@ -6,6 +6,8 @@ export interface Cat100Identity {
   scenario: 'a' | 'b';
   course: string;
   source: 'url' | 'code' | 'localStorage' | 'anonymous';
+  name?: string;
+  email?: string;
 }
 
 interface Cat100GatePageProps {

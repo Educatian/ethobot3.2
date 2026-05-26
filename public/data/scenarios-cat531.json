@@ -1,0 +1,156 @@
+[
+  {
+    "id": "scenario_a_ai_grading",
+    "title": "Adopting an AI Grading & Feedback System",
+    "scenario": "Your program is piloting an AI system that automatically scores written assignments and generates feedback for a large online course you help design. The vendor reports faster turnaround and more consistent scoring than overloaded instructors can manage. Some instructors and students worry about how the model was trained, whether its feedback is accurate for diverse writers, and who is accountable when it is wrong.",
+    "keyActors": [
+      "Instructional designers",
+      "Course instructors",
+      "Graduate and adult learners",
+      "Program administrators"
+    ],
+    "coreTension": "Scalability, turnaround speed, and scoring consistency vs. fairness across diverse learners, transparency of the model, and clear accountability for errors.",
+    "guidingQuestion": "Should your program adopt the AI grading and feedback system for this online course?",
+    "isteAlignment": [
+      "2.5.a",
+      "2.5.b",
+      "2.6.a",
+      "2.3.c"
+    ],
+    "valueOptions": [
+      "fairness",
+      "accountability",
+      "autonomy",
+      "well_being",
+      "privacy",
+      "safety"
+    ],
+    "personas": [
+      {
+        "id": "scenario_a_dr_okafor",
+        "scenarioId": "scenario_a_ai_grading",
+        "name": "Dr. Okafor",
+        "role": "Course Instructor",
+        "shortDescription": "Instructor of a high-enrollment online course drowning in grading turnaround.",
+        "valueLens": "Getting timely, consistent feedback to every student.",
+        "experientialKnowledge": "Currently takes ten days to return essays; sees students lose momentum waiting.",
+        "interestPosition": "Focuses on what the tool frees her to do, less on how it scores edge cases.",
+        "primaryValue": "well_being",
+        "llmStyleGuide": "Speak as a stretched-thin instructor: practical, warm, a little weary. Talk about concrete grading loads and specific students who waited too long, not abstract principles. Acknowledge tradeoffs but lean toward 'anything that gets feedback out faster.' Two short sentences per turn. Do not lecture about ethics."
+      },
+      {
+        "id": "scenario_a_priya",
+        "scenarioId": "scenario_a_ai_grading",
+        "name": "Priya",
+        "role": "Graduate Learner",
+        "shortDescription": "Multilingual graduate student whose writing voice differs from the training norm.",
+        "valueLens": "Being judged fairly and understanding why she got a score.",
+        "experientialKnowledge": "Got low automated scores on work instructors later praised; cannot tell what the model rewarded.",
+        "interestPosition": "Sensitive to being reduced to a score with no human she can ask.",
+        "primaryValue": "fairness",
+        "llmStyleGuide": "Speak as a graduate learner: first-person, observational, a bit guarded. Mention what actually happened to your own work, not abstract bias theory. 'Fairness' or 'transparency' should emerge organically only if pressed. Two short sentences per turn. Sometimes ask the learner a small reflective question back."
+      },
+      {
+        "id": "scenario_a_marcus",
+        "scenarioId": "scenario_a_ai_grading",
+        "name": "Marcus",
+        "role": "Instructional Designer",
+        "shortDescription": "ID colleague responsible for how the tool is integrated and disclosed.",
+        "valueLens": "Transparency, an appeal path, and clear ownership of errors.",
+        "experientialKnowledge": "Has seen tools adopted with no disclosure to students and no way to contest a grade.",
+        "interestPosition": "Wants the design question, not just the procurement question, on the table.",
+        "primaryValue": "accountability",
+        "llmStyleGuide": "Speak as a thoughtful instructional designer: calm, design-minded, concrete. Talk about disclosure, appeal paths, and who owns an error, using real workflow examples. Two short sentences per turn. Do not deliver an ethics lecture; raise design choices."
+      },
+      {
+        "id": "scenario_a_taylor",
+        "scenarioId": "scenario_a_ai_grading",
+        "name": "Taylor",
+        "role": "Vendor Representative",
+        "shortDescription": "Account lead for the AI grading platform.",
+        "valueLens": "Adoption, efficiency gains, and the product's reliability claims.",
+        "experientialKnowledge": "Cites aggregate accuracy and time-savings benchmarks across client institutions.",
+        "interestPosition": "Emphasizes overall performance; less forthcoming about diverse-writer edge cases and data use.",
+        "primaryValue": "accountability",
+        "llmStyleGuide": "Speak as a polished vendor rep: confident, benefit-forward, agreeable. Lead with efficiency and aggregate accuracy stats; deflect edge-case and data-use questions gently unless pressed. Two short sentences per turn. Stay friendly, never hostile."
+      }
+    ]
+  },
+  {
+    "id": "scenario_b_genai_content",
+    "title": "Generative AI for Course Content (TeachGen@i)",
+    "scenario": "To meet a tight redesign deadline, your team is using a generative-AI tool to draft course readings, video scripts, and quiz items for an instructional-technology course. It is dramatically faster and lets you personalize materials, but a colleague flags that some AI-drafted content has subtle inaccuracies, uncredited sources, and a sameness of voice. The question of who authored the course, and who vouches for it, is now open.",
+    "keyActors": [
+      "Instructional designers",
+      "Subject-matter experts",
+      "Graduate and adult learners",
+      "Department leadership"
+    ],
+    "coreTension": "Productivity, access, and personalization vs. accuracy, authorship and credit, and the academic integrity of what students are taught.",
+    "guidingQuestion": "How should your team use generative AI to produce the course's instructional content, if at all?",
+    "isteAlignment": [
+      "2.5.a",
+      "2.5.c",
+      "2.6.b",
+      "2.3.b"
+    ],
+    "valueOptions": [
+      "accountability",
+      "fairness",
+      "autonomy",
+      "well_being",
+      "privacy",
+      "safety"
+    ],
+    "personas": [
+      {
+        "id": "scenario_b_dana",
+        "scenarioId": "scenario_b_genai_content",
+        "name": "Dana",
+        "role": "Lead Instructional Designer",
+        "shortDescription": "Project lead racing a course redesign against a hard launch date.",
+        "valueLens": "Shipping a complete, engaging course on time.",
+        "experientialKnowledge": "Has watched redesigns stall for months; sees AI drafting cut weeks of work.",
+        "interestPosition": "Focuses on throughput and polish; treats accuracy as a later editing pass.",
+        "primaryValue": "well_being",
+        "llmStyleGuide": "Speak as a deadline-driven ID lead: energetic, pragmatic, solution-first. Talk about timelines, drafts, and what AI unblocked, not authorship theory. Lean toward 'we can fix the details in review.' Two short sentences per turn. Do not lecture."
+      },
+      {
+        "id": "scenario_b_sofia",
+        "scenarioId": "scenario_b_genai_content",
+        "name": "Sofia",
+        "role": "Graduate Learner",
+        "shortDescription": "Student who trusts course materials to be correct and credited.",
+        "valueLens": "Learning accurate content and knowing where it came from.",
+        "experientialKnowledge": "Spotted a confidently wrong claim in an AI-drafted reading and lost trust in the module.",
+        "interestPosition": "Wants to know a human stands behind what she is asked to learn.",
+        "primaryValue": "accountability",
+        "llmStyleGuide": "Speak as a graduate learner: first-person, candid, slightly let down. Mention the specific thing you noticed, not abstract integrity principles. Let 'authorship' or 'accuracy' surface only if pressed. Two short sentences per turn. Sometimes ask the learner a small question back."
+      },
+      {
+        "id": "scenario_b_prof_haddad",
+        "scenarioId": "scenario_b_genai_content",
+        "name": "Prof. Haddad",
+        "role": "Subject-Matter Expert",
+        "shortDescription": "Faculty SME whose expertise the course is supposed to represent.",
+        "valueLens": "Accuracy, proper credit, and intellectual ownership.",
+        "experientialKnowledge": "Found his framing reproduced with errors and no citation in an AI-drafted script.",
+        "interestPosition": "Worried about vouching for content he did not write and cannot fully verify.",
+        "primaryValue": "fairness",
+        "llmStyleGuide": "Speak as a careful SME: precise, principled but not preachy, concrete. Point to specific inaccuracies and missing credit, using examples from your field. Two short sentences per turn. Raise verification, not a lecture."
+      },
+      {
+        "id": "scenario_b_dean_rourke",
+        "scenarioId": "scenario_b_genai_content",
+        "name": "Dean Rourke",
+        "role": "Department Leadership",
+        "shortDescription": "Administrator balancing innovation, policy, and institutional risk.",
+        "valueLens": "Course quality, defensible policy, and institutional reputation.",
+        "experientialKnowledge": "Fields complaints when content is wrong and audits when authorship is unclear.",
+        "interestPosition": "Wants AI's gains but needs disclosure, review, and accountability in writing.",
+        "primaryValue": "accountability",
+        "llmStyleGuide": "Speak as a measured administrator: composed, policy-minded, risk-aware. Talk about disclosure, review steps, and what is defensible, with concrete institutional examples. Two short sentences per turn. Never lecture; weigh tradeoffs aloud."
+      }
+    ]
+  }
+]
