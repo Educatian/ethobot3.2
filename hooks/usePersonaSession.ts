@@ -17,6 +17,7 @@ import {
   isCat100ChatInitialized,
   streamCat100Chat,
   resetCat100Chat,
+  seedCat100History,
 } from '../services/cat100Chat';
 import {
   detectVocabulary,
@@ -61,6 +62,9 @@ export interface UsePersonaSessionArgs {
   initialPosition?: PositionInput | null;
   expectedPersonaTurns?: number;
   logContext?: Cat100LogContext | null;
+  // Resume: prior transcript to rehydrate. When present (non-empty), the hook
+  // skips the fresh facilitator opening and continues the saved conversation.
+  resumeMessages?: Cat100Message[] | null;
 }
 
 export interface UsePersonaSessionResult {
@@ -90,6 +94,7 @@ export const usePersonaSession = (args: UsePersonaSessionArgs): UsePersonaSessio
     initialPosition = null,
     expectedPersonaTurns,
     logContext = null,
+    resumeMessages = null,
   } = args;
   const isFixedTurns = typeof expectedPersonaTurns === 'number';
   const pickPersonaTurns = () =>
@@ -125,11 +130,44 @@ export const usePersonaSession = (args: UsePersonaSessionArgs): UsePersonaSessio
     let cancelled = false;
     setIsChatReady(false);
     setPhase('initializing');
+    const resuming = Array.isArray(resumeMessages) && resumeMessages.length > 0;
     initializeCat100Chat(language, scenario, initialPosition).then(async success => {
       if (cancelled) return;
       setIsChatReady(success);
       setPhase(success ? 'in_facilitator' : 'idle');
       if (!success) return;
+
+      // RESUME: rehydrate the saved transcript, re-seed the model history so the
+      // dialogue continues coherently, and skip the fresh facilitator opening.
+      if (resuming) {
+        const saved = resumeMessages as Cat100Message[];
+        setMessages(saved);
+        messagesRef.current = saved;
+        const personaIds = Array.from(
+          new Set<string>(
+            saved.filter(m => m.speaker === 'persona' && m.personaId).map(m => m.personaId as string)
+          )
+        );
+        setCalledPersonaIds(personaIds);
+        calledPersonaIdsRef.current = personaIds;
+        overallTurnRef.current = saved.reduce((mx, m) => Math.max(mx, m.turnNumber || 0), 0);
+        seedCat100History(
+          saved
+            .filter(m => m.speaker !== 'system')
+            .map(m => ({
+              role: (m.speaker === 'learner' ? 'user' : 'assistant') as 'user' | 'assistant',
+              content: m.text,
+            }))
+        );
+        if (logContext) {
+          logCat100Event('CAT100_SESSION_RESUME', logContext, {
+            scenarioId: scenario.id,
+            condition: condition ?? ('learner_directed' as StudyCondition),
+            extra: { resumedMessageCount: saved.length },
+          });
+        }
+        return;
+      }
 
       if (logContext) {
         logCat100Event('CAT100_SESSION_START', logContext, {

@@ -52,6 +52,17 @@ export const isCat100ChatInitialized = (): boolean => cat100SystemPrompt !== nul
 export const getCat100ChatScenarioId = (): string | null => cat100ScenarioId;
 export const getCat100ChatLanguage = (): string | null => cat100Language;
 
+// Resume support: re-seed the model conversation history from a prior session
+// so the dialogue continues coherently after a reload. Call AFTER
+// initializeCat100Chat (which clears history + sets the system prompt).
+export const seedCat100History = (
+  turns: Array<{ role: 'user' | 'assistant'; content: string }>
+): void => {
+  cat100History = turns
+    .filter(t => (t.role === 'user' || t.role === 'assistant') && (t.content ?? '').trim().length > 0)
+    .map(t => ({ role: t.role, content: t.content }));
+};
+
 export const initializeCat100Chat = async (
   language: string,
   scenario: Scenario,

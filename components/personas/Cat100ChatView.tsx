@@ -16,6 +16,9 @@ interface Cat100ChatViewProps {
   logContext?: Cat100LogContext | null;
   expectedPersonaTurns?: number;
   onFinish: () => void;
+  // Resume support.
+  resumeMessages?: Cat100Message[] | null;
+  onMessagesChange?: (messages: Cat100Message[]) => void;
 }
 
 const speakerStyles: Record<Cat100Message['speaker'], string> = {
@@ -40,6 +43,8 @@ const Cat100ChatView: React.FC<Cat100ChatViewProps> = ({
   logContext = null,
   expectedPersonaTurns,
   onFinish,
+  resumeMessages = null,
+  onMessagesChange,
 }) => {
   const session = usePersonaSession({
     scenario,
@@ -48,7 +53,13 @@ const Cat100ChatView: React.FC<Cat100ChatViewProps> = ({
     initialPosition,
     logContext,
     expectedPersonaTurns,
+    resumeMessages,
   });
+
+  // Surface transcript changes upward so the parent can persist a resume snapshot.
+  useEffect(() => {
+    onMessagesChange?.(session.messages);
+  }, [session.messages, onMessagesChange]);
 
   const scrollRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => {

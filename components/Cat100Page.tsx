@@ -18,6 +18,8 @@ import {
 } from '../services/cat100Logging';
 import UniversalGate from './UniversalGate';
 import RosterGate from './RosterGate';
+import type { Cat100Message } from '../hooks/usePersonaSession';
+import { isSupabaseConfigured, supabase } from '../services/supabaseClient';
 
 // Qualtrics POST survey (AI-Enhanced Multimedia Learning). Identity is passed
 // so the survey opens pre-matched: PID links session/log <-> survey; Course
@@ -165,6 +167,14 @@ const Cat100Page: React.FC<Cat100PageProps> = ({ onBack, mode = 'cat100' }) => {
 
   const sessionStartTimeRef = useRef<number>(Date.now());
 
+  // Resume: transcript rehydrated from a prior session (Supabase, keyed by pid).
+  // `resumeChecked` gates the chat mount so usePersonaSession sees resumeMessages.
+  const [resumeMessages, setResumeMessages] = useState<Cat100Message[] | null>(null);
+  const [resumeChecked, setResumeChecked] = useState(false);
+  const resumeAttemptedForRef = useRef<string | null>(null);
+  const latestMessagesRef = useRef<Cat100Message[]>([]);
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   // Identity resolution: sessionStorage (after gate) > URL params > null (show gate)
   const [identity, setIdentity] = useState<ResolvedIdentity | null>(() => {
     const sessionIdentity = readSessionIdentity();
@@ -234,6 +244,79 @@ const Cat100Page: React.FC<Cat100PageProps> = ({ onBack, mode = 'cat100' }) => {
       : condition === StudyCondition.AI_RECOMMENDED
       ? 'AI-recommended'
       : 'unspecified';
+
+  // ---- Resume: load a saved session for this pid, then persist on changes ----
+  const scheduleSave = (status: 'in_progress' | 'complete') => {
+    if (!resumeChecked || !identity || !isSupabaseConfigured) return;
+    const pid = identity.participantId;
+    const msgs = latestMessagesRef.current;
+    // Skip empty no-op rows, and never overwrite a real transcript with the
+    // transient empty state right after a resumed chat mounts.
+    const meaningful = phase !== 'intro' || !!initialPosition || msgs.length > 0;
+    if (!meaningful) return;
+    if (msgs.length === 0 && (phase === 'chat' || phase === 'post' || phase === 'debrief')) return;
+    const snapshot = {
+      phase,
+      initialPosition,
+      closingPosition,
+      delta,
+      closingReflection,
+      messages: msgs,
+      savedAt: new Date().toISOString(),
+    };
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = setTimeout(() => {
+      // RPC may not exist yet (SQL not applied) → resolves with {error}, stays inert.
+      supabase
+        .rpc('save_session', { p_pid: pid, p_snapshot: snapshot, p_status: status })
+        .then(() => undefined, () => undefined);
+    }, 800);
+  };
+
+  // Load saved session once per pid (gates the chat mount via resumeChecked).
+  // No cancellation flag: this is a one-shot and must always flip resumeChecked,
+  // even under React StrictMode's mount→cleanup→mount double-invoke (the ref
+  // guard dedupes the actual fetch).
+  useEffect(() => {
+    if (!identity) return;
+    const pid = identity.participantId;
+    if (resumeAttemptedForRef.current === pid) return;
+    resumeAttemptedForRef.current = pid;
+    if (!isSupabaseConfigured) { setResumeChecked(true); return; }
+    supabase.rpc('get_session', { p_pid: pid }).then(
+      ({ data, error }) => {
+        const row: any = !error && Array.isArray(data) && data.length > 0 ? data[0] : null;
+        const snap = row?.snapshot;
+        if (snap && typeof snap === 'object') {
+          const validPhases: Phase[] = ['intro', 'pre', 'chat', 'post', 'debrief'];
+          if (snap.initialPosition) setInitialPosition(snap.initialPosition as PositionInput);
+          if (snap.closingPosition) setClosingPosition(snap.closingPosition as PositionInput);
+          if (snap.delta) setDelta(snap.delta as PrePostDelta);
+          if (typeof snap.closingReflection === 'string') setClosingReflection(snap.closingReflection);
+          if (Array.isArray(snap.messages) && snap.messages.length > 0) {
+            setResumeMessages(snap.messages as Cat100Message[]);
+            latestMessagesRef.current = snap.messages as Cat100Message[];
+          }
+          if (validPhases.includes(snap.phase)) setPhase(snap.phase as Phase);
+        }
+        setResumeChecked(true);
+      },
+      () => setResumeChecked(true)
+    );
+  }, [identity]);
+
+  // Persist when meaningful state changes; mark complete at debrief.
+  useEffect(() => {
+    scheduleSave(phase === 'debrief' ? 'complete' : 'in_progress');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase, initialPosition, closingPosition, delta, closingReflection]);
+
+  useEffect(() => () => { if (saveTimerRef.current) clearTimeout(saveTimerRef.current); }, []);
+
+  const handleChatMessages = (msgs: Cat100Message[]) => {
+    latestMessagesRef.current = msgs;
+    scheduleSave('in_progress');
+  };
 
   const handlePreFormSubmit = (position: PositionInput) => {
     setInitialPosition(position);
@@ -334,6 +417,8 @@ const Cat100Page: React.FC<Cat100PageProps> = ({ onBack, mode = 'cat100' }) => {
       logContext={logContext}
       expectedPersonaTurns={fixedPersonaTurns}
       onFinish={() => setPhase('post')}
+      resumeMessages={resumeMessages}
+      onMessagesChange={handleChatMessages}
     />
   );
 
@@ -396,6 +481,15 @@ const Cat100Page: React.FC<Cat100PageProps> = ({ onBack, mode = 'cat100' }) => {
       <UniversalGate onAccept={handleGateAccept} />
     ) : (
       <Cat100GatePage onAccept={handleGateAccept} />
+    );
+  }
+
+  // Wait for the resume check so the chat mounts with any saved transcript.
+  if (!resumeChecked) {
+    return (
+      <div className="fixed inset-0 bg-lyceum-paper flex items-center justify-center">
+        <div className="w-12 h-12 border-4 border-alabama-crimson border-dashed rounded-full animate-spin" />
+      </div>
     );
   }
 
