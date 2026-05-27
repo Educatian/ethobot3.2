@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import type { Cat100Identity } from './Cat100GatePage';
 import { isSupabaseConfigured, supabase } from '../services/supabaseClient';
 
@@ -6,25 +6,29 @@ interface Student { name: string; pid: string; }
 interface Section { section: string; course: string; passcode: string; students: Student[]; }
 interface RosterGateProps { onAccept: (identity: Cat100Identity) => void; }
 
+const COURSE_LABELS: Record<string, string> = {
+  CAT100: 'CAT 100 — Computer Concepts & Applications',
+  CAT531: 'CAT 531 — Computer-Based Instruction',
+};
+
 // Deterministic fallback cell if the live RPC is unavailable (e.g., SQL not yet
-// applied). Students never see the cell either way; the research team reads it
-// from Supabase. Live balancing (assign_cell RPC) is preferred and global.
+// applied). Students never see the cell either way.
 const hashInt = (s: string): number => {
   let h = 5381;
   for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) >>> 0;
   return h >>> 0;
 };
 const CELLS: Array<{ condition: 'ld' | 'ar'; scenario: 'a' | 'b' }> = [
-  { condition: 'ld', scenario: 'a' },
-  { condition: 'ld', scenario: 'b' },
-  { condition: 'ar', scenario: 'a' },
-  { condition: 'ar', scenario: 'b' },
+  { condition: 'ld', scenario: 'a' }, { condition: 'ld', scenario: 'b' },
+  { condition: 'ar', scenario: 'a' }, { condition: 'ar', scenario: 'b' },
 ];
 const fallbackCell = (pid: string) => CELLS[hashInt(pid) % 4];
 
 const RosterGate: React.FC<RosterGateProps> = ({ onAccept }) => {
   const [sections, setSections] = useState<Section[] | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [step, setStep] = useState<'course' | 'passcode' | 'name'>('course');
+  const [course, setCourse] = useState('');
   const [code, setCode] = useState('');
   const [sec, setSec] = useState<Section | null>(null);
   const [studentIdx, setStudentIdx] = useState('');
@@ -40,23 +44,30 @@ const RosterGate: React.FC<RosterGateProps> = ({ onAccept }) => {
     return () => { cancelled = true; };
   }, []);
 
+  const courses = useMemo(() => {
+    const set = Array.from(new Set<string>((sections || []).map(s => s.course)));
+    return set.map(c => ({ value: c, label: COURSE_LABELS[c] || c }));
+  }, [sections]);
+
+  const submitCourse = (e: React.FormEvent) => {
+    e.preventDefault(); setError(null);
+    if (!course) { setError('Please select your course.'); return; }
+    setStep('passcode');
+  };
+
   const submitCode = (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
+    e.preventDefault(); setError(null);
     if (!sections) { setError('Still loading — please try again in a moment.'); return; }
     const t = code.trim().toLowerCase();
     if (!t) { setError('Please enter your class passcode.'); return; }
-    const m = sections.find(s => s.passcode.trim().toLowerCase() === t);
-    if (!m) { setError('Passcode not recognized. Check the code your instructor posted in Blackboard.'); return; }
-    if (!m.students || m.students.length === 0) {
-      setError('This class has no roster loaded yet — please contact your instructor.'); return;
-    }
-    setSec(m); setStudentIdx('');
+    const m = sections.find(s => s.course === course && s.passcode.trim().toLowerCase() === t);
+    if (!m) { setError('Passcode not recognized for this course. Check the code your instructor posted in Blackboard.'); return; }
+    if (!m.students || m.students.length === 0) { setError('This class has no roster loaded yet — please contact your instructor.'); return; }
+    setSec(m); setStudentIdx(''); setStep('name');
   };
 
   const enter = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
+    e.preventDefault(); setError(null);
     if (!sec) return;
     const i = parseInt(studentIdx, 10);
     if (!(i >= 0)) { setError('Please select your name.'); return; }
@@ -75,9 +86,7 @@ const RosterGate: React.FC<RosterGateProps> = ({ onAccept }) => {
           }
         }
       }
-    } catch {
-      /* fall through to deterministic fallback */
-    }
+    } catch { /* fall through to fallback */ }
     if (!cell) cell = fallbackCell(st.pid);
     onAccept({
       pid: st.pid, condition: cell.condition, scenario: cell.scenario,
@@ -89,57 +98,79 @@ const RosterGate: React.FC<RosterGateProps> = ({ onAccept }) => {
   const card = 'bg-lyceum-paper/95 border border-lyceum-line rounded-lg p-6 shadow-ambient space-y-5';
   const field = 'w-full px-4 py-3 rounded border border-lyceum-line bg-white text-base focus:outline-none focus:border-alabama-crimson focus:ring-2 focus:ring-alabama-crimson/20';
   const btn = 'w-full py-3 rounded text-sm font-semibold tracking-wide transition-colors bg-alabama-crimson text-white hover:bg-crimson-dark shadow-ambient disabled:opacity-60';
+  const back = 'w-full text-xs text-lyceum-muted hover:text-alabama-crimson';
 
-  // Step 1: passcode
-  if (!sec) {
+  const Header = ({ sub }: { sub: string }) => (
+    <header className="text-center mb-8">
+      <h1 className="text-3xl font-headline font-semibold text-lyceum-ink mb-1">ETHOBOT — AI Ethics Dialogue</h1>
+      <p className="text-sm text-lyceum-muted">{sub}</p>
+      <p className="mt-3 text-xs text-lyceum-muted">
+        <span className={step === 'course' ? 'text-alabama-crimson font-semibold' : ''}>1. Course</span>{'  ›  '}
+        <span className={step === 'passcode' ? 'text-alabama-crimson font-semibold' : ''}>2. Passcode</span>{'  ›  '}
+        <span className={step === 'name' ? 'text-alabama-crimson font-semibold' : ''}>3. Your name</span>
+      </p>
+    </header>
+  );
+
+  // Step 1: course menu
+  if (step === 'course') {
     return (
-      <div className={wrap}>
-        <main className="w-full max-w-md">
-          <header className="text-center mb-8">
-            <h1 className="text-3xl font-headline font-semibold text-lyceum-ink mb-1">ETHOBOT — Persona Dialogue</h1>
-            <p className="text-sm text-lyceum-muted">Enter your class passcode to begin.</p>
-          </header>
-          <form onSubmit={submitCode} className={card}>
-            <div>
-              <label htmlFor="rg-code" className="block text-sm font-semibold text-lyceum-ink mb-2 uppercase tracking-wide">Class passcode</label>
-              <input id="rg-code" type="text" value={code} autoFocus autoComplete="off" spellCheck={false}
-                onChange={e => { setCode(e.target.value); setError(null); }}
-                placeholder="e.g. ab12cd" className={`${field} font-mono tracking-wider`} />
-              <p className="mt-2 text-xs text-lyceum-muted">Your instructor posted this code in Blackboard.</p>
-            </div>
-            {error && <div className="rounded border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>}
-            {loadError && !error && <div className="rounded border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-800">Unable to load the class list. Please refresh, or contact your instructor.</div>}
-            <button type="submit" disabled={!code.trim()} className={btn}>Continue</button>
-          </form>
-        </main>
-      </div>
+      <div className={wrap}><main className="w-full max-w-md">
+        <Header sub="Select your course to begin." />
+        <form onSubmit={submitCourse} className={card}>
+          <div>
+            <label htmlFor="rg-course" className="block text-sm font-semibold text-lyceum-ink mb-2 uppercase tracking-wide">Course</label>
+            <select id="rg-course" value={course} onChange={e => { setCourse(e.target.value); setError(null); }} className={field}>
+              <option value="" disabled>Select your course…</option>
+              {courses.map(c => (<option key={c.value} value={c.value}>{c.label}</option>))}
+            </select>
+          </div>
+          {error && <div className="rounded border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>}
+          {loadError && !error && <div className="rounded border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-800">Unable to load courses. Please refresh, or contact your instructor.</div>}
+          <button type="submit" disabled={!course} className={btn}>Continue</button>
+        </form>
+      </main></div>
     );
   }
 
-  // Step 2: name dropdown
-  return (
-    <div className={wrap}>
-      <main className="w-full max-w-md">
-        <header className="text-center mb-8">
-          <h1 className="text-3xl font-headline font-semibold text-lyceum-ink mb-1">ETHOBOT — Persona Dialogue</h1>
-          <p className="text-sm text-lyceum-muted">{sec.course} · Select your name to begin.</p>
-        </header>
-        <form onSubmit={enter} className={card}>
+  // Step 2: passcode
+  if (step === 'passcode') {
+    return (
+      <div className={wrap}><main className="w-full max-w-md">
+        <Header sub={`${COURSE_LABELS[course] || course} · Enter your class passcode.`} />
+        <form onSubmit={submitCode} className={card}>
           <div>
-            <label htmlFor="rg-name" className="block text-sm font-semibold text-lyceum-ink mb-2 uppercase tracking-wide">Your name</label>
-            <select id="rg-name" value={studentIdx} onChange={e => { setStudentIdx(e.target.value); setError(null); }} className={field}>
-              <option value="" disabled>Select your name…</option>
-              {sec.students.map((s, i) => (<option key={s.pid} value={i}>{s.name}</option>))}
-            </select>
-            <p className="mt-2 text-xs text-lyceum-muted">Pick the name your instructor enrolled. Not listed? Contact your instructor.</p>
+            <label htmlFor="rg-code" className="block text-sm font-semibold text-lyceum-ink mb-2 uppercase tracking-wide">Class passcode</label>
+            <input id="rg-code" type="text" value={code} autoFocus autoComplete="off" spellCheck={false}
+              onChange={e => { setCode(e.target.value); setError(null); }} placeholder="e.g. ab12cd" className={`${field} font-mono tracking-wider`} />
+            <p className="mt-2 text-xs text-lyceum-muted">Your instructor posted this code in Blackboard.</p>
           </div>
           {error && <div className="rounded border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>}
-          <button type="submit" disabled={working || studentIdx === ''} className={btn}>{working ? 'Starting…' : 'Begin'}</button>
-          <button type="button" onClick={() => { setSec(null); setCode(''); setStudentIdx(''); setError(null); }}
-            className="w-full text-xs text-lyceum-muted hover:text-alabama-crimson">← use a different passcode</button>
+          <button type="submit" disabled={!code.trim()} className={btn}>Continue</button>
+          <button type="button" onClick={() => { setStep('course'); setCode(''); setError(null); }} className={back}>← change course</button>
         </form>
-      </main>
-    </div>
+      </main></div>
+    );
+  }
+
+  // Step 3: name dropdown
+  return (
+    <div className={wrap}><main className="w-full max-w-md">
+      <Header sub={`${sec ? COURSE_LABELS[sec.course] || sec.course : ''} · Select your name to begin.`} />
+      <form onSubmit={enter} className={card}>
+        <div>
+          <label htmlFor="rg-name" className="block text-sm font-semibold text-lyceum-ink mb-2 uppercase tracking-wide">Your name</label>
+          <select id="rg-name" value={studentIdx} onChange={e => { setStudentIdx(e.target.value); setError(null); }} className={field}>
+            <option value="" disabled>Select your name…</option>
+            {sec?.students.map((s, i) => (<option key={s.pid} value={i}>{s.name}</option>))}
+          </select>
+          <p className="mt-2 text-xs text-lyceum-muted">Pick the name your instructor enrolled. Not listed? Contact your instructor.</p>
+        </div>
+        {error && <div className="rounded border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>}
+        <button type="submit" disabled={working || studentIdx === ''} className={btn}>{working ? 'Starting…' : 'Begin the AI Ethics Dialogue →'}</button>
+        <button type="button" onClick={() => { setStep('passcode'); setStudentIdx(''); setError(null); }} className={back}>← back</button>
+      </form>
+    </main></div>
   );
 };
 

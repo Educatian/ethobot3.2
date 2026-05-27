@@ -105,7 +105,7 @@ const App: React.FC = () => {
   // (assign_cell RPC, global counterbalancing) and hidden from students.
   // Renders WITHOUT useEthobot so the legacy Gemini-direct chat never runs here.
   if (
-    pathname === '/enter' || pathname === '/cat100' ||
+    pathname === '/course' || pathname === '/enter' || pathname === '/cat100' ||
     pathname === '/cat531' || pathname === '/study'
   ) {
     return (
