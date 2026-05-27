@@ -100,31 +100,18 @@ const App: React.FC = () => {
     );
   }
 
-  // Universal entry: one link for all courses. Learner picks the course in a
-  // dropdown, then the same persona flow loads that course's scenarios and
-  // hands off to the survey. Uses the persona client (no legacy useEthobot).
-  if (pathname === '/study' || pathname === '/cat531') {
+  // Study entry for all sections/courses: passcode → name dropdown → persona.
+  // The passcode determines the section/course; study cells are assigned live
+  // (assign_cell RPC, global counterbalancing) and hidden from students.
+  // Renders WITHOUT useEthobot so the legacy Gemini-direct chat never runs here.
+  if (
+    pathname === '/enter' || pathname === '/cat100' ||
+    pathname === '/cat531' || pathname === '/study'
+  ) {
     return (
       <div className="font-sans">
         <Cat100Page
-          mode="universal"
-          onBack={() => {
-            window.location.assign('/');
-          }}
-        />
-        <Toaster position="top-center" />
-      </div>
-    );
-  }
-
-  // CAT 100 lives in its own routing branch with its own chat client.
-  // Crucially, we render Cat100Page WITHOUT calling useEthobot, so the legacy
-  // Gemini-direct chat init never runs on this path.
-  if (pathname === '/cat100') {
-    return (
-      <div className="font-sans">
-        <Cat100Page
-          mode="cat100"
+          mode="roster"
           onBack={() => {
             window.location.assign('/');
           }}

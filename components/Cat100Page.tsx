@@ -17,6 +17,7 @@ import {
   type Cat100LogContext,
 } from '../services/cat100Logging';
 import UniversalGate from './UniversalGate';
+import RosterGate from './RosterGate';
 
 // Qualtrics POST survey (AI-Enhanced Multimedia Learning). Identity is passed
 // so the survey opens pre-matched: PID links session/log <-> survey; Course
@@ -46,7 +47,7 @@ const COURSE_CONFIG: Record<
 
 interface Cat100PageProps {
   onBack: () => void;
-  mode?: 'cat100' | 'universal';
+  mode?: 'cat100' | 'universal' | 'roster';
 }
 
 type Phase = 'intro' | 'pre' | 'chat' | 'post' | 'debrief';
@@ -387,9 +388,11 @@ const Cat100Page: React.FC<Cat100PageProps> = ({ onBack, mode = 'cat100' }) => {
     </section>
   );
 
-  // Gate: no identity yet → universal course-select gate or CAT100 access-code gate.
+  // Gate: no identity yet → roster (passcode + name), universal course-select, or CAT100 access-code.
   if (!identity) {
-    return mode === 'universal' ? (
+    return mode === 'roster' ? (
+      <RosterGate onAccept={handleGateAccept} />
+    ) : mode === 'universal' ? (
       <UniversalGate onAccept={handleGateAccept} />
     ) : (
       <Cat100GatePage onAccept={handleGateAccept} />
@@ -408,21 +411,12 @@ const Cat100Page: React.FC<Cat100PageProps> = ({ onBack, mode = 'cat100' }) => {
         <h1 className="text-3xl font-headline font-semibold mb-2 text-lyceum-ink">
           {COURSE_CONFIG[normalizeCourse(identity.course)].label} — Persona Dialogue
         </h1>
-        <p className="text-sm text-lyceum-muted mb-2">
-          Phase: <span className="font-mono">{phase}</span> · Condition:{' '}
-          <span className="font-mono">{conditionLabel}</span>
+        {/* Study condition/participant kept in the DOM for research/QA but hidden from
+            students so they remain blind to their assigned cell. */}
+        <p className="hidden" data-testid="participant-info">
+          {identity.participantId} · {identity.course} · {conditionLabel} · source={identity.source}
         </p>
-        <p className="text-xs text-lyceum-muted mb-6" data-testid="participant-info">
-          Participant <span className="font-mono">{identity.participantId}</span>
-          {identity.course && (
-            <>
-              {' · '}
-              <span className="font-mono">{identity.course}</span>
-            </>
-          )}
-          {' · '}
-          <span className="font-mono">source={identity.source}</span>
-        </p>
+        <div className="mb-6" />
 
         {!activeScenario && (
           <section className="bg-lyceum-paper/95 border border-lyceum-line rounded-lg p-5 shadow-ambient">

@@ -3,6 +3,7 @@
     { "source": "/project-overview", "destination": "/" },
     { "source": "/cat100", "destination": "/" },
     { "source": "/cat531", "destination": "/" },
-    { "source": "/study", "destination": "/" }
+    { "source": "/study", "destination": "/" },
+    { "source": "/enter", "destination": "/" }
   ]
 }

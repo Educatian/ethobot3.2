@@ -1,0 +1,254 @@
+{
+ "note": "Per-shell gate: passcode -> name dropdown. Condition/scenario are NOT in this file; they are assigned LIVE and globally (across all shells) by the assign_cell Supabase RPC, and are hidden from students.",
+ "sections": [
+  {
+   "section": "CAT100-910",
+   "course": "CAT100",
+   "passcode": "72ye2r",
+   "students": [
+    {
+     "name": "Emma Bohnsack",
+     "pid": "CAT100-910-01"
+    },
+    {
+     "name": "Jack Boyle",
+     "pid": "CAT100-910-02"
+    },
+    {
+     "name": "Grace Cabeceiras",
+     "pid": "CAT100-910-03"
+    },
+    {
+     "name": "Trent Colburn",
+     "pid": "CAT100-910-04"
+    },
+    {
+     "name": "Reese Dodgion",
+     "pid": "CAT100-910-05"
+    },
+    {
+     "name": "Broc Dy-Liacco",
+     "pid": "CAT100-910-06"
+    },
+    {
+     "name": "Will Farmer",
+     "pid": "CAT100-910-07"
+    },
+    {
+     "name": "Lexi Feria",
+     "pid": "CAT100-910-08"
+    },
+    {
+     "name": "Emilio Guerrero",
+     "pid": "CAT100-910-09"
+    },
+    {
+     "name": "Kareem Harris",
+     "pid": "CAT100-910-10"
+    },
+    {
+     "name": "Emery Hopkins",
+     "pid": "CAT100-910-11"
+    },
+    {
+     "name": "Lizzie Lewis",
+     "pid": "CAT100-910-12"
+    },
+    {
+     "name": "Breygan Mahan",
+     "pid": "CAT100-910-13"
+    },
+    {
+     "name": "Cameron McClanahan",
+     "pid": "CAT100-910-14"
+    },
+    {
+     "name": "Gordy Morris",
+     "pid": "CAT100-910-15"
+    },
+    {
+     "name": "Caleb Nelson",
+     "pid": "CAT100-910-16"
+    },
+    {
+     "name": "Natalie Olson",
+     "pid": "CAT100-910-17"
+    },
+    {
+     "name": "Steve Ransom",
+     "pid": "CAT100-910-18"
+    },
+    {
+     "name": "Ethan Sankey",
+     "pid": "CAT100-910-19"
+    },
+    {
+     "name": "Caleb Smith",
+     "pid": "CAT100-910-20"
+    },
+    {
+     "name": "Corinne Stanky",
+     "pid": "CAT100-910-21"
+    },
+    {
+     "name": "Quinton Turner",
+     "pid": "CAT100-910-22"
+    },
+    {
+     "name": "Veronica Udowitz",
+     "pid": "CAT100-910-23"
+    },
+    {
+     "name": "Alex Vaughn",
+     "pid": "CAT100-910-24"
+    },
+    {
+     "name": "Brenna Wilson",
+     "pid": "CAT100-910-25"
+    },
+    {
+     "name": "Devin Wright",
+     "pid": "CAT100-910-26"
+    }
+   ]
+  },
+  {
+   "section": "CAT100-911-921",
+   "course": "CAT100",
+   "passcode": "vnqu6y",
+   "students": [
+    {
+     "name": "Ryan Amos",
+     "pid": "CAT100-911-921-01"
+    },
+    {
+     "name": "Bayler Bufkin",
+     "pid": "CAT100-911-921-02"
+    },
+    {
+     "name": "Abigail Carter",
+     "pid": "CAT100-911-921-03"
+    },
+    {
+     "name": "Mary Heninger",
+     "pid": "CAT100-911-921-04"
+    },
+    {
+     "name": "John Hillman",
+     "pid": "CAT100-911-921-05"
+    },
+    {
+     "name": "Charlie Kramer",
+     "pid": "CAT100-911-921-06"
+    },
+    {
+     "name": "Lexi Moss",
+     "pid": "CAT100-911-921-07"
+    },
+    {
+     "name": "Ariana Rodriguez",
+     "pid": "CAT100-911-921-08"
+    },
+    {
+     "name": "Duncan Williams",
+     "pid": "CAT100-911-921-09"
+    }
+   ]
+  },
+  {
+   "section": "CAT531-920-922",
+   "course": "CAT531",
+   "passcode": "cbrdkh",
+   "students": [
+    {
+     "name": "Becky Allen",
+     "pid": "CAT531-920-922-01"
+    },
+    {
+     "name": "Matthew Apker",
+     "pid": "CAT531-920-922-02"
+    },
+    {
+     "name": "Brandon Bearden",
+     "pid": "CAT531-920-922-03"
+    },
+    {
+     "name": "Kristen Blair",
+     "pid": "CAT531-920-922-04"
+    },
+    {
+     "name": "Anna Breazeale",
+     "pid": "CAT531-920-922-05"
+    },
+    {
+     "name": "LB Burbage",
+     "pid": "CAT531-920-922-06"
+    },
+    {
+     "name": "Amanda Buzzell",
+     "pid": "CAT531-920-922-07"
+    },
+    {
+     "name": "Samantha Dunsieth",
+     "pid": "CAT531-920-922-08"
+    },
+    {
+     "name": "Chloe Hammond",
+     "pid": "CAT531-920-922-09"
+    },
+    {
+     "name": "Joshua Henry",
+     "pid": "CAT531-920-922-10"
+    },
+    {
+     "name": "Harchell Johnson",
+     "pid": "CAT531-920-922-11"
+    },
+    {
+     "name": "Francesca Kokkines",
+     "pid": "CAT531-920-922-12"
+    },
+    {
+     "name": "Trevor McGhee",
+     "pid": "CAT531-920-922-13"
+    },
+    {
+     "name": "Brad Middleton",
+     "pid": "CAT531-920-922-14"
+    },
+    {
+     "name": "Stephanie Minner",
+     "pid": "CAT531-920-922-15"
+    },
+    {
+     "name": "Caleb Perry",
+     "pid": "CAT531-920-922-16"
+    },
+    {
+     "name": "Sydney Quitt",
+     "pid": "CAT531-920-922-17"
+    },
+    {
+     "name": "Lucas Santiago",
+     "pid": "CAT531-920-922-18"
+    },
+    {
+     "name": "Jenna Shehadeh",
+     "pid": "CAT531-920-922-19"
+    },
+    {
+     "name": "Kailey Smith",
+     "pid": "CAT531-920-922-20"
+    },
+    {
+     "name": "Crystal Thomas",
+     "pid": "CAT531-920-922-21"
+    },
+    {
+     "name": "Tyler White",
+     "pid": "CAT531-920-922-22"
+    }
+   ]
+  }
+ ]
+}

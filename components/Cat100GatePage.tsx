@@ -8,6 +8,7 @@ export interface Cat100Identity {
   source: 'url' | 'code' | 'localStorage' | 'anonymous';
   name?: string;
   email?: string;
+  section?: string;
 }
 
 interface Cat100GatePageProps {
