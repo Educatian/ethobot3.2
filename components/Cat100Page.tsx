@@ -54,7 +54,7 @@ const COURSE_CONFIG: Record<
   SNU: {
     scenariosUrl: '/data/scenarios.json',
     scenarioIds: ['scenario_a_classroom_monitoring', 'scenario_b_edtech_data_sharing'],
-    label: 'SNU',
+    label: 'DE001',
   },
 };
 

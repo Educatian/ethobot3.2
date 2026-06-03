@@ -14,7 +14,7 @@ interface RosterGateProps {
 const COURSE_LABELS: Record<string, string> = {
   CAT100: 'CAT 100 — Computer Concepts & Applications',
   CAT531: 'CAT 531 — Computer-Based Instruction',
-  SNU: 'SNU — AI Ethics Dialogue',
+  SNU: 'DE001 — AI Ethics Dialogue',
 };
 
 const isSnuCourse = (course: string | undefined) => !!course && /snu/i.test(course);
