@@ -249,6 +249,23 @@
      "pid": "CAT531-920-922-22"
     }
    ]
+  },
+  {
+   "section": "SNU-26",
+   "course": "SNU",
+   "passcode": "snu26",
+   "students": [
+    { "name": "Participant 01", "pid": "SNU-26-01" },
+    { "name": "Participant 02", "pid": "SNU-26-02" },
+    { "name": "Participant 03", "pid": "SNU-26-03" },
+    { "name": "Participant 04", "pid": "SNU-26-04" },
+    { "name": "Participant 05", "pid": "SNU-26-05" },
+    { "name": "Participant 06", "pid": "SNU-26-06" },
+    { "name": "Participant 07", "pid": "SNU-26-07" },
+    { "name": "Participant 08", "pid": "SNU-26-08" },
+    { "name": "Participant 09", "pid": "SNU-26-09" },
+    { "name": "Participant 10", "pid": "SNU-26-10" }
+   ]
   }
  ]
 }

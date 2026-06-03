@@ -28,9 +28,13 @@ const CAT_SURVEY_URL = 'https://az1.qualtrics.com/jfe/form/SV_e4DQXWu2fl5OHl4';
 
 const SESSION_KEY = 'cat100_session';
 
-type CourseKey = 'CAT100' | 'CAT531';
+type CourseKey = 'CAT100' | 'CAT531' | 'SNU';
 const normalizeCourse = (course: string | undefined): CourseKey =>
-  course && /531/.test(course) ? 'CAT531' : 'CAT100';
+  course && /531/.test(course)
+    ? 'CAT531'
+    : course && /snu/i.test(course)
+    ? 'SNU'
+    : 'CAT100';
 const COURSE_CONFIG: Record<
   CourseKey,
   { scenariosUrl: string; scenarioIds: [string, string]; label: string }
@@ -44,6 +48,13 @@ const COURSE_CONFIG: Record<
     scenariosUrl: '/data/scenarios-cat531.json',
     scenarioIds: ['scenario_a_ai_grading', 'scenario_b_genai_content'],
     label: 'CAT 531',
+  },
+  // SNU shell reuses the CAT 100 ethics scenarios for now; swap scenariosUrl
+  // to a dedicated /data/scenarios-snu.json when SNU-specific cases are ready.
+  SNU: {
+    scenariosUrl: '/data/scenarios.json',
+    scenarioIds: ['scenario_a_classroom_monitoring', 'scenario_b_edtech_data_sharing'],
+    label: 'SNU',
   },
 };
 

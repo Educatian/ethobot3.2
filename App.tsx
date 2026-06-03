@@ -106,7 +106,7 @@ const App: React.FC = () => {
   // Renders WITHOUT useEthobot so the legacy Gemini-direct chat never runs here.
   if (
     pathname === '/course' || pathname === '/enter' || pathname === '/cat100' ||
-    pathname === '/cat531' || pathname === '/study'
+    pathname === '/cat531' || pathname === '/snu' || pathname === '/study'
   ) {
     return (
       <div className="font-sans">

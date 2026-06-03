@@ -9,6 +9,7 @@ interface RosterGateProps { onAccept: (identity: Cat100Identity) => void; }
 const COURSE_LABELS: Record<string, string> = {
   CAT100: 'CAT 100 — Computer Concepts & Applications',
   CAT531: 'CAT 531 — Computer-Based Instruction',
+  SNU: 'SNU — AI Ethics Dialogue',
 };
 
 // Deterministic fallback cell if the live RPC is unavailable (e.g., SQL not yet
