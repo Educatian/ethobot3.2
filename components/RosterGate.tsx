@@ -37,6 +37,9 @@ const RosterGate: React.FC<RosterGateProps> = ({ onAccept, defaultCourse }) => {
   // Pick KO vs EN copy. CAT cohorts keep language='en' (no toggle shown), so
   // localizing these strings does not change their English UX.
   const L = (ko: string, en: string) => (language === 'ko' ? ko : en);
+  // SNU is the bilingual cohort — its course title follows the toggle.
+  const courseLabel = (c: string) =>
+    isSnuCourse(c) ? L('DE001 — 디지털 교육', 'DE001 — Digital Education') : (COURSE_LABELS[c] || c);
 
   const [sections, setSections] = useState<Section[] | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -57,10 +60,10 @@ const RosterGate: React.FC<RosterGateProps> = ({ onAccept, defaultCourse }) => {
     return () => { cancelled = true; };
   }, []);
 
-  const courses = useMemo(() => {
-    const set = Array.from(new Set<string>((sections || []).map(s => s.course)));
-    return set.map(c => ({ value: c, label: COURSE_LABELS[c] || c }));
-  }, [sections]);
+  const courses = useMemo(
+    () => Array.from(new Set<string>((sections || []).map(s => s.course))),
+    [sections],
+  );
 
   // The language toggle is offered only for SNU (the bilingual cohort).
   const showLangToggle = isSnuCourse(course);
@@ -163,7 +166,7 @@ const RosterGate: React.FC<RosterGateProps> = ({ onAccept, defaultCourse }) => {
             <label htmlFor="rg-course" className="block text-sm font-semibold text-lyceum-ink mb-2 uppercase tracking-wide">{L('과목', 'Course')}</label>
             <select id="rg-course" value={course} onChange={e => { setCourse(e.target.value); setError(null); }} className={field}>
               <option value="" disabled>{L('과목을 선택하세요…', 'Select your course…')}</option>
-              {courses.map(c => (<option key={c.value} value={c.value}>{c.label}</option>))}
+              {courses.map(c => (<option key={c} value={c}>{courseLabel(c)}</option>))}
             </select>
           </div>
           {error && <div className="rounded border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>}
@@ -178,7 +181,7 @@ const RosterGate: React.FC<RosterGateProps> = ({ onAccept, defaultCourse }) => {
   if (step === 'passcode') {
     return (
       <div className={wrap}><main className="w-full max-w-md">
-        <Header sub={`${COURSE_LABELS[course] || course} · ${L('수업 패스코드를 입력하세요.', 'Enter your class passcode.')}`} />
+        <Header sub={`${courseLabel(course)} · ${L('수업 패스코드를 입력하세요.', 'Enter your class passcode.')}`} />
         <form onSubmit={submitCode} className={card}>
           <div>
             <label htmlFor="rg-code" className="block text-sm font-semibold text-lyceum-ink mb-2 uppercase tracking-wide">{L('수업 패스코드', 'Class passcode')}</label>
@@ -199,7 +202,7 @@ const RosterGate: React.FC<RosterGateProps> = ({ onAccept, defaultCourse }) => {
   // Step 3: name dropdown
   return (
     <div className={wrap}><main className="w-full max-w-md">
-      <Header sub={`${sec ? COURSE_LABELS[sec.course] || sec.course : ''} · ${L('이름을 선택하면 시작합니다.', 'Select your name to begin.')}`} />
+      <Header sub={`${sec ? courseLabel(sec.course) : ''} · ${L('이름을 선택하면 시작합니다.', 'Select your name to begin.')}`} />
       <form onSubmit={enter} className={card}>
         <div>
           <label htmlFor="rg-name" className="block text-sm font-semibold text-lyceum-ink mb-2 uppercase tracking-wide">{L('이름', 'Your name')}</label>

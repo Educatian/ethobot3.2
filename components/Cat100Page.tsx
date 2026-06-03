@@ -542,7 +542,9 @@ const Cat100Page: React.FC<Cat100PageProps> = ({ onBack, mode = 'cat100', defaul
           )}
         </div>
         <h1 className="text-3xl font-headline font-semibold mb-2 text-lyceum-ink">
-          {COURSE_CONFIG[normalizeCourse(identity.course)].label} — Persona Dialogue
+          {normalizeCourse(identity.course) === 'SNU'
+            ? (language === 'ko' ? 'DE001 — 디지털 교육' : 'DE001 — Digital Education')
+            : `${COURSE_CONFIG[normalizeCourse(identity.course)].label} — Persona Dialogue`}
         </h1>
         {/* Study condition/participant kept in the DOM for research/QA but hidden from
             students so they remain blind to their assigned cell. */}
