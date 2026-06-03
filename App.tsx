@@ -112,6 +112,7 @@ const App: React.FC = () => {
       <div className="font-sans">
         <Cat100Page
           mode="roster"
+          defaultCourse={pathname === '/snu' ? 'SNU' : undefined}
           onBack={() => {
             window.location.assign('/');
           }}

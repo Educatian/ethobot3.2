@@ -61,6 +61,8 @@ const COURSE_CONFIG: Record<
 interface Cat100PageProps {
   onBack: () => void;
   mode?: 'cat100' | 'universal' | 'roster';
+  // When set (e.g. the /snu route) the roster gate preselects this course.
+  defaultCourse?: string;
 }
 
 type Phase = 'intro' | 'pre' | 'chat' | 'post' | 'debrief';
@@ -166,7 +168,7 @@ const fromUrlParams = (): ResolvedIdentity | null => {
   return null;
 };
 
-const Cat100Page: React.FC<Cat100PageProps> = ({ onBack, mode = 'cat100' }) => {
+const Cat100Page: React.FC<Cat100PageProps> = ({ onBack, mode = 'cat100', defaultCourse }) => {
   const [scenarios, setScenarios] = useState<Scenario[] | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [phase, setPhase] = useState<Phase>('intro');
@@ -174,7 +176,7 @@ const Cat100Page: React.FC<Cat100PageProps> = ({ onBack, mode = 'cat100' }) => {
   const [closingPosition, setClosingPosition] = useState<PositionInput | null>(null);
   const [delta, setDelta] = useState<PrePostDelta | null>(null);
   const [closingReflection, setClosingReflection] = useState('');
-  const { language } = useLanguage();
+  const { language, setLanguage } = useLanguage();
 
   const sessionStartTimeRef = useRef<number>(Date.now());
 
@@ -487,7 +489,7 @@ const Cat100Page: React.FC<Cat100PageProps> = ({ onBack, mode = 'cat100' }) => {
   // Gate: no identity yet → roster (passcode + name), universal course-select, or CAT100 access-code.
   if (!identity) {
     return mode === 'roster' ? (
-      <RosterGate onAccept={handleGateAccept} />
+      <RosterGate onAccept={handleGateAccept} defaultCourse={defaultCourse} />
     ) : mode === 'universal' ? (
       <UniversalGate onAccept={handleGateAccept} />
     ) : (
@@ -507,12 +509,38 @@ const Cat100Page: React.FC<Cat100PageProps> = ({ onBack, mode = 'cat100' }) => {
   return (
     <div className="min-h-screen text-lyceum-ink px-6 py-10">
       <div className={`${phase === 'chat' ? 'max-w-6xl' : 'max-w-3xl'} mx-auto`}>
-        <button
-          onClick={onBack}
-          className="text-sm text-alabama-crimson hover:underline mb-6"
-        >
-          ← Back to ETHOBOT
-        </button>
+        <div className="flex items-center justify-between mb-6">
+          <button
+            onClick={onBack}
+            className="text-sm text-alabama-crimson hover:underline"
+          >
+            {language === 'ko' ? '← ETHOBOT으로' : '← Back to ETHOBOT'}
+          </button>
+          {/* KO/EN toggle — bilingual cohorts (SNU) only. */}
+          {normalizeCourse(identity.course) === 'SNU' && (
+            <div className="flex items-center gap-1" role="group" aria-label="Language">
+              <button
+                type="button"
+                onClick={() => setLanguage('en')}
+                className={`px-2.5 py-1 rounded text-xs font-semibold border transition-colors ${
+                  language === 'en' ? 'border-alabama-crimson text-alabama-crimson' : 'border-transparent text-lyceum-muted hover:text-alabama-crimson'
+                }`}
+              >
+                EN
+              </button>
+              <span className="text-lyceum-line">|</span>
+              <button
+                type="button"
+                onClick={() => setLanguage('ko')}
+                className={`px-2.5 py-1 rounded text-xs font-semibold border transition-colors ${
+                  language === 'ko' ? 'border-alabama-crimson text-alabama-crimson' : 'border-transparent text-lyceum-muted hover:text-alabama-crimson'
+                }`}
+              >
+                한국어
+              </button>
+            </div>
+          )}
+        </div>
         <h1 className="text-3xl font-headline font-semibold mb-2 text-lyceum-ink">
           {COURSE_CONFIG[normalizeCourse(identity.course)].label} — Persona Dialogue
         </h1>

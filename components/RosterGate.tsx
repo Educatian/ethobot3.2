@@ -1,16 +1,23 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import type { Cat100Identity } from './Cat100GatePage';
 import { isSupabaseConfigured, supabase } from '../services/supabaseClient';
+import { useLanguage } from '../contexts/LanguageContext';
 
 interface Student { name: string; pid: string; }
 interface Section { section: string; course: string; passcode: string; students: Student[]; }
-interface RosterGateProps { onAccept: (identity: Cat100Identity) => void; }
+interface RosterGateProps {
+  onAccept: (identity: Cat100Identity) => void;
+  // When set (e.g. the /snu route), preselect this course and skip the course menu.
+  defaultCourse?: string;
+}
 
 const COURSE_LABELS: Record<string, string> = {
   CAT100: 'CAT 100 — Computer Concepts & Applications',
   CAT531: 'CAT 531 — Computer-Based Instruction',
   SNU: 'SNU — AI Ethics Dialogue',
 };
+
+const isSnuCourse = (course: string | undefined) => !!course && /snu/i.test(course);
 
 // Deterministic fallback cell if the live RPC is unavailable (e.g., SQL not yet
 // applied). Students never see the cell either way.
@@ -25,11 +32,16 @@ const CELLS: Array<{ condition: 'ld' | 'ar'; scenario: 'a' | 'b' }> = [
 ];
 const fallbackCell = (pid: string) => CELLS[hashInt(pid) % 4];
 
-const RosterGate: React.FC<RosterGateProps> = ({ onAccept }) => {
+const RosterGate: React.FC<RosterGateProps> = ({ onAccept, defaultCourse }) => {
+  const { language, setLanguage } = useLanguage();
+  // Pick KO vs EN copy. CAT cohorts keep language='en' (no toggle shown), so
+  // localizing these strings does not change their English UX.
+  const L = (ko: string, en: string) => (language === 'ko' ? ko : en);
+
   const [sections, setSections] = useState<Section[] | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [step, setStep] = useState<'course' | 'passcode' | 'name'>('course');
-  const [course, setCourse] = useState('');
+  const [step, setStep] = useState<'course' | 'passcode' | 'name'>(defaultCourse ? 'passcode' : 'course');
+  const [course, setCourse] = useState(defaultCourse ?? '');
   const [code, setCode] = useState('');
   const [sec, setSec] = useState<Section | null>(null);
   const [studentIdx, setStudentIdx] = useState('');
@@ -50,20 +62,23 @@ const RosterGate: React.FC<RosterGateProps> = ({ onAccept }) => {
     return set.map(c => ({ value: c, label: COURSE_LABELS[c] || c }));
   }, [sections]);
 
+  // The language toggle is offered only for SNU (the bilingual cohort).
+  const showLangToggle = isSnuCourse(course);
+
   const submitCourse = (e: React.FormEvent) => {
     e.preventDefault(); setError(null);
-    if (!course) { setError('Please select your course.'); return; }
+    if (!course) { setError(L('과목을 선택하세요.', 'Please select your course.')); return; }
     setStep('passcode');
   };
 
   const submitCode = (e: React.FormEvent) => {
     e.preventDefault(); setError(null);
-    if (!sections) { setError('Still loading — please try again in a moment.'); return; }
+    if (!sections) { setError(L('아직 불러오는 중입니다. 잠시 후 다시 시도하세요.', 'Still loading — please try again in a moment.')); return; }
     const t = code.trim().toLowerCase();
-    if (!t) { setError('Please enter your class passcode.'); return; }
+    if (!t) { setError(L('수업 패스코드를 입력하세요.', 'Please enter your class passcode.')); return; }
     const m = sections.find(s => s.course === course && s.passcode.trim().toLowerCase() === t);
-    if (!m) { setError('Passcode not recognized for this course. Check the code your instructor posted in Blackboard.'); return; }
-    if (!m.students || m.students.length === 0) { setError('This class has no roster loaded yet — please contact your instructor.'); return; }
+    if (!m) { setError(L('이 과목에 맞는 패스코드가 아닙니다. 강의자가 안내한 코드를 확인하세요.', 'Passcode not recognized for this course. Check the code your instructor posted in Blackboard.')); return; }
+    if (!m.students || m.students.length === 0) { setError(L('이 수업의 명단이 아직 등록되지 않았습니다. 강의자에게 문의하세요.', 'This class has no roster loaded yet — please contact your instructor.')); return; }
     setSec(m); setStudentIdx(''); setStep('name');
   };
 
@@ -71,7 +86,7 @@ const RosterGate: React.FC<RosterGateProps> = ({ onAccept }) => {
     e.preventDefault(); setError(null);
     if (!sec) return;
     const i = parseInt(studentIdx, 10);
-    if (!(i >= 0)) { setError('Please select your name.'); return; }
+    if (!(i >= 0)) { setError(L('이름을 선택하세요.', 'Please select your name.')); return; }
     const st = sec.students[i];
     setWorking(true);
     let cell: { condition: 'ld' | 'ar'; scenario: 'a' | 'b' } | null = null;
@@ -101,14 +116,39 @@ const RosterGate: React.FC<RosterGateProps> = ({ onAccept }) => {
   const btn = 'w-full py-3 rounded text-sm font-semibold tracking-wide transition-colors bg-alabama-crimson text-white hover:bg-crimson-dark shadow-ambient disabled:opacity-60';
   const back = 'w-full text-xs text-lyceum-muted hover:text-alabama-crimson';
 
+  const LangToggle = () => (
+    <div className="flex items-center justify-center gap-1 mb-4" role="group" aria-label="Language">
+      <button
+        type="button"
+        onClick={() => setLanguage('en')}
+        className={`px-3 py-1 rounded text-xs font-semibold border transition-colors ${
+          language === 'en' ? 'border-alabama-crimson text-alabama-crimson' : 'border-transparent text-lyceum-muted hover:text-alabama-crimson'
+        }`}
+      >
+        EN
+      </button>
+      <span className="text-lyceum-line">|</span>
+      <button
+        type="button"
+        onClick={() => setLanguage('ko')}
+        className={`px-3 py-1 rounded text-xs font-semibold border transition-colors ${
+          language === 'ko' ? 'border-alabama-crimson text-alabama-crimson' : 'border-transparent text-lyceum-muted hover:text-alabama-crimson'
+        }`}
+      >
+        한국어
+      </button>
+    </div>
+  );
+
   const Header = ({ sub }: { sub: string }) => (
     <header className="text-center mb-8">
+      {showLangToggle && <LangToggle />}
       <h1 className="text-3xl font-headline font-semibold text-lyceum-ink mb-1">ETHOBOT — AI Ethics Dialogue</h1>
       <p className="text-sm text-lyceum-muted">{sub}</p>
       <p className="mt-3 text-xs text-lyceum-muted">
-        <span className={step === 'course' ? 'text-alabama-crimson font-semibold' : ''}>1. Course</span>{'  ›  '}
-        <span className={step === 'passcode' ? 'text-alabama-crimson font-semibold' : ''}>2. Passcode</span>{'  ›  '}
-        <span className={step === 'name' ? 'text-alabama-crimson font-semibold' : ''}>3. Your name</span>
+        <span className={step === 'course' ? 'text-alabama-crimson font-semibold' : ''}>{L('1. 과목', '1. Course')}</span>{'  ›  '}
+        <span className={step === 'passcode' ? 'text-alabama-crimson font-semibold' : ''}>{L('2. 패스코드', '2. Passcode')}</span>{'  ›  '}
+        <span className={step === 'name' ? 'text-alabama-crimson font-semibold' : ''}>{L('3. 이름', '3. Your name')}</span>
       </p>
     </header>
   );
@@ -117,18 +157,18 @@ const RosterGate: React.FC<RosterGateProps> = ({ onAccept }) => {
   if (step === 'course') {
     return (
       <div className={wrap}><main className="w-full max-w-md">
-        <Header sub="Select your course to begin." />
+        <Header sub={L('시작하려면 과목을 선택하세요.', 'Select your course to begin.')} />
         <form onSubmit={submitCourse} className={card}>
           <div>
-            <label htmlFor="rg-course" className="block text-sm font-semibold text-lyceum-ink mb-2 uppercase tracking-wide">Course</label>
+            <label htmlFor="rg-course" className="block text-sm font-semibold text-lyceum-ink mb-2 uppercase tracking-wide">{L('과목', 'Course')}</label>
             <select id="rg-course" value={course} onChange={e => { setCourse(e.target.value); setError(null); }} className={field}>
-              <option value="" disabled>Select your course…</option>
+              <option value="" disabled>{L('과목을 선택하세요…', 'Select your course…')}</option>
               {courses.map(c => (<option key={c.value} value={c.value}>{c.label}</option>))}
             </select>
           </div>
           {error && <div className="rounded border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>}
-          {loadError && !error && <div className="rounded border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-800">Unable to load courses. Please refresh, or contact your instructor.</div>}
-          <button type="submit" disabled={!course} className={btn}>Continue</button>
+          {loadError && !error && <div className="rounded border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-800">{L('과목을 불러오지 못했습니다. 새로고침하거나 강의자에게 문의하세요.', 'Unable to load courses. Please refresh, or contact your instructor.')}</div>}
+          <button type="submit" disabled={!course} className={btn}>{L('계속', 'Continue')}</button>
         </form>
       </main></div>
     );
@@ -138,17 +178,19 @@ const RosterGate: React.FC<RosterGateProps> = ({ onAccept }) => {
   if (step === 'passcode') {
     return (
       <div className={wrap}><main className="w-full max-w-md">
-        <Header sub={`${COURSE_LABELS[course] || course} · Enter your class passcode.`} />
+        <Header sub={`${COURSE_LABELS[course] || course} · ${L('수업 패스코드를 입력하세요.', 'Enter your class passcode.')}`} />
         <form onSubmit={submitCode} className={card}>
           <div>
-            <label htmlFor="rg-code" className="block text-sm font-semibold text-lyceum-ink mb-2 uppercase tracking-wide">Class passcode</label>
+            <label htmlFor="rg-code" className="block text-sm font-semibold text-lyceum-ink mb-2 uppercase tracking-wide">{L('수업 패스코드', 'Class passcode')}</label>
             <input id="rg-code" type="text" value={code} autoFocus autoComplete="off" spellCheck={false}
               onChange={e => { setCode(e.target.value); setError(null); }} placeholder="e.g. ab12cd" className={`${field} font-mono tracking-wider`} />
-            <p className="mt-2 text-xs text-lyceum-muted">Your instructor posted this code in Blackboard.</p>
+            <p className="mt-2 text-xs text-lyceum-muted">{L('강의자가 안내한 코드를 입력하세요.', 'Your instructor posted this code in Blackboard.')}</p>
           </div>
           {error && <div className="rounded border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>}
-          <button type="submit" disabled={!code.trim()} className={btn}>Continue</button>
-          <button type="button" onClick={() => { setStep('course'); setCode(''); setError(null); }} className={back}>← change course</button>
+          <button type="submit" disabled={!code.trim()} className={btn}>{L('계속', 'Continue')}</button>
+          {!defaultCourse && (
+            <button type="button" onClick={() => { setStep('course'); setCode(''); setError(null); }} className={back}>{L('← 과목 변경', '← change course')}</button>
+          )}
         </form>
       </main></div>
     );
@@ -157,19 +199,19 @@ const RosterGate: React.FC<RosterGateProps> = ({ onAccept }) => {
   // Step 3: name dropdown
   return (
     <div className={wrap}><main className="w-full max-w-md">
-      <Header sub={`${sec ? COURSE_LABELS[sec.course] || sec.course : ''} · Select your name to begin.`} />
+      <Header sub={`${sec ? COURSE_LABELS[sec.course] || sec.course : ''} · ${L('이름을 선택하면 시작합니다.', 'Select your name to begin.')}`} />
       <form onSubmit={enter} className={card}>
         <div>
-          <label htmlFor="rg-name" className="block text-sm font-semibold text-lyceum-ink mb-2 uppercase tracking-wide">Your name</label>
+          <label htmlFor="rg-name" className="block text-sm font-semibold text-lyceum-ink mb-2 uppercase tracking-wide">{L('이름', 'Your name')}</label>
           <select id="rg-name" value={studentIdx} onChange={e => { setStudentIdx(e.target.value); setError(null); }} className={field}>
-            <option value="" disabled>Select your name…</option>
+            <option value="" disabled>{L('이름을 선택하세요…', 'Select your name…')}</option>
             {sec?.students.map((s, i) => (<option key={s.pid} value={i}>{s.name}</option>))}
           </select>
-          <p className="mt-2 text-xs text-lyceum-muted">Pick the name your instructor enrolled. Not listed? Contact your instructor.</p>
+          <p className="mt-2 text-xs text-lyceum-muted">{L('강의자가 등록한 이름을 선택하세요. 목록에 없으면 강의자에게 문의하세요.', 'Pick the name your instructor enrolled. Not listed? Contact your instructor.')}</p>
         </div>
         {error && <div className="rounded border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>}
-        <button type="submit" disabled={working || studentIdx === ''} className={btn}>{working ? 'Starting…' : 'Begin the AI Ethics Dialogue →'}</button>
-        <button type="button" onClick={() => { setStep('passcode'); setStudentIdx(''); setError(null); }} className={back}>← back</button>
+        <button type="submit" disabled={working || studentIdx === ''} className={btn}>{working ? L('시작하는 중…', 'Starting…') : L('AI 윤리 대화 시작 →', 'Begin the AI Ethics Dialogue →')}</button>
+        <button type="button" onClick={() => { setStep('passcode'); setStudentIdx(''); setError(null); }} className={back}>{L('← 뒤로', '← back')}</button>
       </form>
     </main></div>
   );
