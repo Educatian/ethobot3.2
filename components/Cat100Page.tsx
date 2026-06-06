@@ -10,7 +10,7 @@ import PostFormPosition from './personas/PostFormPosition';
 import PersonaPanelCard from './personas/PersonaPanelCard';
 import Cat100ChatView from './personas/Cat100ChatView';
 import Cat100GatePage, { type Cat100Identity } from './Cat100GatePage';
-import { summarizeDelta } from '../services/stancePrePost';
+import { summarizeDelta, labelValuesKo } from '../services/stancePrePost';
 import { useLanguage } from '../contexts/LanguageContext';
 import {
   logCat100Event,
@@ -421,7 +421,7 @@ const Cat100Page: React.FC<Cat100PageProps> = ({ onBack, mode = 'cat100', defaul
       </dl>
 
       <h3 className="text-sm font-semibold mb-2 text-lyceum-ink uppercase tracking-wide">
-        {ko ? '이 사례의 이해관계자' : 'Personas in this scenario'}
+        {ko ? '이 사례의 이해관계자(stakeholder)' : 'Personas in this scenario'}
       </h3>
       <div className="grid sm:grid-cols-2 gap-3 mb-6">
         {scenario.personas.map(persona => (
@@ -469,14 +469,14 @@ const Cat100Page: React.FC<Cat100PageProps> = ({ onBack, mode = 'cat100', defaul
           <span className="font-mono text-lyceum-ink/85">
             {stanceDisplay(initialPosition?.stance)} @ {initialPosition?.confidence}%
           </span>
-          {ko ? ' · 중요 가치 [' : '; values ['}{initialPosition?.values.join(', ')}]
+          {ko ? ' · 중요 가치 [' : '; values ['}{ko ? labelValuesKo(initialPosition?.values ?? []) : initialPosition?.values.join(', ')}]
         </p>
         <p>
           <span className="font-semibold text-lyceum-ink">{ko ? '최종 입장:' : 'Closing:'}</span>{' '}
           <span className="font-mono text-lyceum-ink/85">
             {stanceDisplay(closingPosition?.stance)} @ {closingPosition?.confidence}%
           </span>
-          {ko ? ' · 중요 가치 [' : '; values ['}{closingPosition?.values.join(', ')}]
+          {ko ? ' · 중요 가치 [' : '; values ['}{ko ? labelValuesKo(closingPosition?.values ?? []) : closingPosition?.values.join(', ')}]
         </p>
         {delta && (
           <p className="text-lyceum-ink/85">

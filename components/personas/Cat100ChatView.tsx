@@ -129,7 +129,7 @@ const Cat100ChatView: React.FC<Cat100ChatViewProps> = ({
         <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-3">
           {!session.isChatReady && (
             <p className="text-sm text-lyceum-muted text-center mt-8 italic">
-              {ko ? '진행자를 준비하는 중입니다…' : 'Initializing CAT 100 facilitator…'}
+              {ko ? '에토봇을 준비하고 있어요…' : 'Initializing CAT 100 facilitator…'}
             </p>
           )}
           {session.isChatReady && session.messages.length === 0 && (
@@ -181,7 +181,7 @@ const Cat100ChatView: React.FC<Cat100ChatViewProps> = ({
 
         <div className="px-4 py-3 border-t border-lyceum-line bg-lyceum-paper-soft flex items-center justify-between">
           <span className="text-xs text-lyceum-muted">
-            {ko ? '참여시킨 인물: ' : 'Personas called: '}
+            {ko ? '지금까지 부른 인물: ' : 'Personas called: '}
             <span className="text-alabama-crimson font-semibold">{session.calledPersonaIds.length}</span> / {scenario.personas.length}
           </span>
           <button
@@ -202,7 +202,7 @@ const Cat100ChatView: React.FC<Cat100ChatViewProps> = ({
       <aside className="space-y-3">
         <header>
           <h3 className="text-sm font-semibold text-lyceum-ink uppercase tracking-wide">
-            {ko ? '이해관계자' : 'Stakeholder personas'}
+            {ko ? '이해관계자(stakeholder)' : 'Stakeholder personas'}
           </h3>
           <p className="text-xs text-lyceum-muted mt-1">
             {condition === StudyCondition.LEARNER_DIRECTED

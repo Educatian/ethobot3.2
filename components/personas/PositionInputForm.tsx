@@ -4,6 +4,7 @@ import {
   ValuePriority,
   type PositionInput,
 } from '../../types';
+import { valueLabelKo } from '../../services/stancePrePost';
 
 interface PositionInputFormProps {
   valueOptions: ValuePriority[];
@@ -36,15 +37,8 @@ const valueLabelEn: Record<ValuePriority, string> = {
   [ValuePriority.WELL_BEING]: 'Well-being',
   [ValuePriority.FAIRNESS]: 'Fairness',
 };
-
-const valueLabelKo: Record<ValuePriority, string> = {
-  [ValuePriority.PRIVACY]: '프라이버시',
-  [ValuePriority.SAFETY]: '안전',
-  [ValuePriority.AUTONOMY]: '자율성',
-  [ValuePriority.ACCOUNTABILITY]: '책무성',
-  [ValuePriority.WELL_BEING]: '복지',
-  [ValuePriority.FAIRNESS]: '공정성',
-};
+// Korean labels (with English in parentheses, 병기) are shared from stancePrePost
+// so the form chips, debrief, and delta summary stay consistent.
 
 const PositionInputForm: React.FC<PositionInputFormProps> = ({
   valueOptions,

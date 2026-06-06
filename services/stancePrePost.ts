@@ -100,6 +100,22 @@ const stanceKo: Record<string, string> = {
   unsure: '잘 모르겠음',
 };
 
+// Shared Korean labels for the value-priority keys, so the SNU/Korean UI never
+// surfaces raw machine keys (well_being, privacy, ...). These six are the core
+// ethics concepts students rank, so they carry the English term in parentheses
+// (병기) for conceptual clarity. Imported by the debrief and the position forms.
+export const valueLabelKo: Record<string, string> = {
+  privacy: '프라이버시(privacy)',
+  safety: '안전(safety)',
+  autonomy: '자율성(autonomy)',
+  accountability: '책무성(accountability)',
+  well_being: '웰빙(well-being)',
+  fairness: '공정성(fairness)',
+};
+
+export const labelValuesKo = (values: string[]): string =>
+  values.map(v => valueLabelKo[v] ?? v).join(', ');
+
 const labelStance = (s: string, ko: boolean): string =>
   ko ? stanceKo[s] ?? s : s;
 
@@ -108,7 +124,7 @@ export const summarizeDelta = (delta: PrePostDelta, language?: string): string =
   if (language === 'ko') {
     const valueLine =
       delta.valuesAdded.length || delta.valuesRemoved.length
-        ? ` 추가된 가치: [${delta.valuesAdded.join(', ') || '—'}]; 빠진 가치: [${delta.valuesRemoved.join(', ') || '—'}].`
+        ? ` 새로 꼽은 가치: [${labelValuesKo(delta.valuesAdded) || '—'}]; 뺀 가치: [${labelValuesKo(delta.valuesRemoved) || '—'}].`
         : ' 중요 가치 순위는 그대로예요.';
     return `입장 ${stanceShiftKo[delta.stanceShift]} (${labelStance(delta.stanceFrom, true)} → ${labelStance(delta.stanceTo, true)}); 확신도 ${sign}${delta.confidenceDelta}.${valueLine}`;
   }

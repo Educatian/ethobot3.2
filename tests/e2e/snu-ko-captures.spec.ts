@@ -37,7 +37,7 @@ test('SNU Korean — intro / pre / chat captures', async ({ page }) => {
 
   // --- Chat view chrome: 이해관계자 / 참여시킨 인물 / 대화 마치기 ---
   await expect(page.getByRole('heading', { name: '이해관계자' })).toBeVisible();
-  await expect(page.getByText('참여시킨 인물:')).toBeVisible();
+  await expect(page.getByText('지금까지 부른 인물:')).toBeVisible();
   await page.screenshot({ path: `${OUT}/03-chatview.png`, fullPage: true });
 });
 

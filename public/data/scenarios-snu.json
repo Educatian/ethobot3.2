@@ -9,7 +9,7 @@
       "학부모와 보호자",
       "학교 행정진"
     ],
-    "coreTension": "수업의 효과와 학생 지원 vs. 학생의 프라이버시와 존엄, 그리고 지속적인 감시가 위축시키는 효과.",
+    "coreTension": "수업의 효과와 학생 지원 vs. 학생의 프라이버시(privacy)와 존엄성(dignity), 그리고 끊임없는 감시가 학생을 위축시키는 문제(chilling effect).",
     "guidingQuestion": "이 교육청의 교사들은 자기 교실에 이 AI 모니터링 도구를 도입해야 할까요?",
     "isteAlignment": ["2.3.a", "2.3.b", "2.3.c", "2.3.d"],
     "valueOptions": ["privacy", "safety", "autonomy", "accountability", "well_being", "fairness"],
@@ -74,7 +74,7 @@
       "학부모와 보호자",
       "학교 행정진"
     ],
-    "coreTension": "수업 접근성·참여·형평성 vs. 충분한 설명에 근거한 동의, 데이터 최소 수집, 그리고 미성년자 보호.",
+    "coreTension": "수업 접근성·참여·형평성(equity) vs. 충분한 설명에 근거한 동의(informed consent), 데이터 최소 수집(data minimization), 그리고 미성년자 보호.",
     "guidingQuestion": "교사는 IT 부서의 검토가 끝나기 전에 이 앱을 교실에 도입해도 될까요?",
     "isteAlignment": ["2.5.a", "2.5.b", "2.6.a", "2.3.c"],
     "valueOptions": ["fairness", "accountability", "autonomy", "well_being", "privacy", "safety"],
