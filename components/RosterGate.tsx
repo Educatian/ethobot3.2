@@ -146,7 +146,7 @@ const RosterGate: React.FC<RosterGateProps> = ({ onAccept, defaultCourse }) => {
   const Header = ({ sub }: { sub: string }) => (
     <header className="text-center mb-8">
       {showLangToggle && <LangToggle />}
-      <h1 className="text-3xl font-headline font-semibold text-lyceum-ink mb-1">ETHOBOT — AI Ethics Dialogue</h1>
+      <h1 className="text-3xl font-headline font-semibold text-lyceum-ink mb-1">{L('ETHOBOT — AI 윤리 대화', 'ETHOBOT — AI Ethics Dialogue')}</h1>
       <p className="text-sm text-lyceum-muted">{sub}</p>
       <p className="mt-3 text-xs text-lyceum-muted">
         <span className={step === 'course' ? 'text-alabama-crimson font-semibold' : ''}>{L('1. 과목', '1. Course')}</span>{'  ›  '}
@@ -186,7 +186,7 @@ const RosterGate: React.FC<RosterGateProps> = ({ onAccept, defaultCourse }) => {
           <div>
             <label htmlFor="rg-code" className="block text-sm font-semibold text-lyceum-ink mb-2 uppercase tracking-wide">{L('수업 패스코드', 'Class passcode')}</label>
             <input id="rg-code" type="text" value={code} autoFocus autoComplete="off" spellCheck={false}
-              onChange={e => { setCode(e.target.value); setError(null); }} placeholder="e.g. ab12cd" className={`${field} font-mono tracking-wider`} />
+              onChange={e => { setCode(e.target.value); setError(null); }} placeholder={L('예: ab12cd', 'e.g. ab12cd')} className={`${field} font-mono tracking-wider`} />
             <p className="mt-2 text-xs text-lyceum-muted">{L('강의자가 안내한 코드를 입력하세요.', 'Your instructor posted this code in Blackboard.')}</p>
           </div>
           {error && <div className="rounded border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>}

@@ -274,6 +274,7 @@ export const usePersonaSession = (args: UsePersonaSessionArgs): UsePersonaSessio
       scenario,
       recentLearnerTurns,
       calledPersonaIds: calledPersonaIdsRef.current,
+      language,
     });
     if (!result) return;
 

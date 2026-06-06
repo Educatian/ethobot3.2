@@ -4,6 +4,7 @@ import {
   type Persona,
   type Scenario,
 } from '../types';
+import { valueLabelKo } from './stancePrePost';
 
 // =============================================================================
 // Rule 1 — single-stakeholder detector
@@ -197,6 +198,7 @@ export interface RecommenderInput {
   scenario: Scenario;
   recentLearnerTurns: string[]; // most recent first OR last — we just join
   calledPersonaIds: string[];
+  language?: string;
 }
 
 export interface PersonaRecommendationResult {
@@ -244,27 +246,40 @@ const valueLensLabel: Record<ValuePriority, string> = {
   [ValuePriority.FAIRNESS]: 'fairness',
 };
 
-const rationaleForRule1 = (persona: Persona, dominantRole: string | null): string => {
+const rationaleForRule1 = (persona: Persona, dominantRole: string | null, ko: boolean): string => {
+  if (ko) {
+    return dominantRole
+      ? `지금까지는 주로 ${dominantRole}의 입장에서 생각해 오셨네요. 아직 들어보지 못한 관점을 줄 ${persona.name}(${persona.role})를 불러올게요.`
+      : `시야를 조금 더 넓혀 볼까요. ${persona.name}(${persona.role})가 아직 들어보지 못한 관점을 더해 줄 수 있어요.`;
+  }
   if (dominantRole) {
     return `You've been reasoning mostly from the ${dominantRole}'s side so far. I'd like to bring in ${persona.name} (${persona.role}) — a perspective you haven't heard yet.`;
   }
   return `Let's widen the field of view. ${persona.name} (${persona.role}) can add a perspective you haven't heard yet.`;
 };
 
-const rationaleForRule2 = (persona: Persona, dominantValue: ValuePriority | null): string => {
+const rationaleForRule2 = (persona: Persona, dominantValue: ValuePriority | null, ko: boolean): string => {
+  if (ko) {
+    return dominantValue
+      ? `지금까지는 주로 ${valueLabelKo[dominantValue] ?? dominantValue} 관점에서 따져 보셨어요. ${persona.name}(${persona.role})는 다른 가치 관점을 가지고 있어요. 함께 들어볼까요.`
+      : `한 가지 가치 관점이 생각의 대부분을 차지하고 있어요. ${persona.name}(${persona.role})는 무게를 다르게 둬요.`;
+  }
   if (dominantValue) {
     return `Your reasoning has been weighed mostly through ${valueLensLabel[dominantValue]} so far. ${persona.name} (${persona.role}) holds a different value lens — I'd like to bring them in.`;
   }
   return `One value lens has been doing most of the work in your reasoning. ${persona.name} (${persona.role}) weights things differently.`;
 };
 
-const rationaleForRule3 = (persona: Persona): string =>
-  `There's another voice here that might be helpful — ${persona.name} (${persona.role}) has a specific concern about how this decision was made.`;
+const rationaleForRule3 = (persona: Persona, ko: boolean): string =>
+  ko
+    ? `여기 도움이 될 만한 또 다른 목소리가 있어요. ${persona.name}(${persona.role})는 이 결정이 어떻게 내려졌는지에 대해 구체적인 우려를 가지고 있어요.`
+    : `There's another voice here that might be helpful — ${persona.name} (${persona.role}) has a specific concern about how this decision was made.`;
 
 export const evaluateRecommendation = (
   input: RecommenderInput
 ): PersonaRecommendationResult | null => {
   const { scenario, recentLearnerTurns, calledPersonaIds } = input;
+  const ko = input.language === 'ko';
   const corpus = recentLearnerTurns.join(' \n ');
   if (!corpus.trim()) return null;
   const uncalled = scenario.personas.filter(p => !calledPersonaIds.includes(p.id));
@@ -279,7 +294,7 @@ export const evaluateRecommendation = (
       return {
         personaId: candidate.id,
         triggerRule: TriggerRule.RULE_1_SINGLE_STAKEHOLDER,
-        rationale: rationaleForRule1(candidate, dominantRole),
+        rationale: rationaleForRule1(candidate, dominantRole, ko),
         matchedSignals: [`stakeholder_count: ${stakeholderRefs.size}`],
       };
     }
@@ -294,7 +309,7 @@ export const evaluateRecommendation = (
       return {
         personaId: candidate.id,
         triggerRule: TriggerRule.RULE_2_SINGLE_VALUE_LENS,
-        rationale: rationaleForRule2(candidate, dominantValue),
+        rationale: rationaleForRule2(candidate, dominantValue, ko),
         matchedSignals: [
           `value_lenses: ${Array.from(valueLenses).join(',') || '∅'}`,
         ],
@@ -310,7 +325,7 @@ export const evaluateRecommendation = (
       return {
         personaId: candidate.id,
         triggerRule: TriggerRule.RULE_3_NO_CONDITIONS_OR_EVIDENCE,
-        rationale: rationaleForRule3(candidate),
+        rationale: rationaleForRule3(candidate, ko),
         matchedSignals: [
           `conditional: ${hasConditional}`,
           `evidence: ${hasEvidence}`,
