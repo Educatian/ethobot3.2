@@ -204,14 +204,19 @@ export const usePersonaSession = (args: UsePersonaSessionArgs): UsePersonaSessio
             );
           }
           if (!cancelled) {
+            const fallbackEmpty = language === 'ko' ? '(첫 메시지를 불러오지 못했어요)' : '(opening unavailable)';
             setMessages(prev =>
-              prev.map(m => (m.id === openingId ? { ...m, text: full || '(opening unavailable)' } : m))
+              prev.map(m => (m.id === openingId ? { ...m, text: full || fallbackEmpty } : m))
             );
           }
         } catch (error) {
           if (!cancelled) {
+            const fallbackOpening =
+              language === 'ko'
+                ? '안녕하세요! 편하게 첫 생각을 들려주세요.'
+                : 'Welcome — feel free to share your opening thought.';
             setMessages(prev =>
-              prev.map(m => (m.id === openingId ? { ...m, text: 'Welcome — feel free to share your opening thought.' } : m))
+              prev.map(m => (m.id === openingId ? { ...m, text: fallbackOpening } : m))
             );
           }
         } finally {
@@ -525,7 +530,10 @@ export const usePersonaSession = (args: UsePersonaSessionArgs): UsePersonaSessio
         speaker: 'system',
         personaId: persona.id,
         personaName: persona.name,
-        text: `${persona.name} (${persona.role}) joined the conversation.`,
+        text:
+          language === 'ko'
+            ? `${persona.name} (${persona.role})님이 대화에 참여했어요.`
+            : `${persona.name} (${persona.role}) joined the conversation.`,
         timestamp: now(),
         turnNumber: overallTurnRef.current,
       });

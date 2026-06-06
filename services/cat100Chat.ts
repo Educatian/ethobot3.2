@@ -72,13 +72,22 @@ export const initializeCat100Chat = async (
   cat100ScenarioId = scenario.id;
   cat100Language = language;
   const languageName = language === 'ko' ? 'Korean' : 'English';
+  // For the Korean (SNU) cohort, steer the model away from stiff machine-
+  // translation phrasing ("귀하는 ... 것입니다") toward warm, natural 존댓말.
+  const koreanStyleNote =
+    language === 'ko'
+      ? `
+
+When responding in Korean, write natural, conversational 존댓말 (해요체) as a warm, friendly facilitator talking with a student. Avoid translationese and formal-document tone: do not use "귀하", "~하는 것입니다", or literal renderings of English structure. Keep it plain and human, the way a thoughtful Korean teacher would actually speak.`
+      : '';
   cat100SystemPrompt = CAT100_SYSTEM_INSTRUCTION
     .replace('{LANGUAGE_NAME}', languageName)
     .replace('{SCENARIO_TITLE}', scenario.title)
     .replace('{SCENARIO_BODY}', scenario.scenario)
     .replace('{KEY_ACTORS}', scenario.keyActors.join(', '))
     .replace('{CORE_TENSION}', scenario.coreTension)
-    .replace('{GUIDING_QUESTION}', scenario.guidingQuestion);
+    .replace('{GUIDING_QUESTION}', scenario.guidingQuestion)
+    + koreanStyleNote;
   return true;
 };
 

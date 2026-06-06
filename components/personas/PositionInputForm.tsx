@@ -13,21 +13,37 @@ interface PositionInputFormProps {
   helperText?: string;
   minValues?: number;
   maxValues?: number;
+  language?: string;
 }
 
-const stanceLabel: Record<StancePosition, string> = {
+const stanceLabelEn: Record<StancePosition, string> = {
   [StancePosition.SUPPORT]: 'Support',
   [StancePosition.OPPOSE]: 'Oppose',
   [StancePosition.UNSURE]: 'Unsure',
 };
 
-const valueLabel: Record<ValuePriority, string> = {
+const stanceLabelKo: Record<StancePosition, string> = {
+  [StancePosition.SUPPORT]: '찬성',
+  [StancePosition.OPPOSE]: '반대',
+  [StancePosition.UNSURE]: '잘 모르겠음',
+};
+
+const valueLabelEn: Record<ValuePriority, string> = {
   [ValuePriority.PRIVACY]: 'Privacy',
   [ValuePriority.SAFETY]: 'Safety',
   [ValuePriority.AUTONOMY]: 'Autonomy',
   [ValuePriority.ACCOUNTABILITY]: 'Accountability',
   [ValuePriority.WELL_BEING]: 'Well-being',
   [ValuePriority.FAIRNESS]: 'Fairness',
+};
+
+const valueLabelKo: Record<ValuePriority, string> = {
+  [ValuePriority.PRIVACY]: '프라이버시',
+  [ValuePriority.SAFETY]: '안전',
+  [ValuePriority.AUTONOMY]: '자율성',
+  [ValuePriority.ACCOUNTABILITY]: '책무성',
+  [ValuePriority.WELL_BEING]: '복지',
+  [ValuePriority.FAIRNESS]: '공정성',
 };
 
 const PositionInputForm: React.FC<PositionInputFormProps> = ({
@@ -38,7 +54,11 @@ const PositionInputForm: React.FC<PositionInputFormProps> = ({
   helperText,
   minValues = 1,
   maxValues = 4,
+  language,
 }) => {
+  const ko = language === 'ko';
+  const stanceLabel = ko ? stanceLabelKo : stanceLabelEn;
+  const valueLabel = ko ? valueLabelKo : valueLabelEn;
   const [stance, setStance] = useState<StancePosition | null>(
     initial?.stance ?? null
   );
@@ -106,7 +126,7 @@ const PositionInputForm: React.FC<PositionInputFormProps> = ({
       {helperText && <p className="text-sm text-lyceum-muted italic">{helperText}</p>}
 
       <fieldset>
-        <legend className="text-sm font-semibold text-lyceum-ink mb-2 uppercase tracking-wide">Your position</legend>
+        <legend className="text-sm font-semibold text-lyceum-ink mb-2 uppercase tracking-wide">{ko ? '나의 입장' : 'Your position'}</legend>
         <div className="flex flex-wrap gap-2">
           {(Object.values(StancePosition) as StancePosition[]).map(option => (
             <label
@@ -133,7 +153,7 @@ const PositionInputForm: React.FC<PositionInputFormProps> = ({
 
       <fieldset>
         <legend className="text-sm font-semibold text-lyceum-ink mb-2 uppercase tracking-wide">
-          How confident are you?{' '}
+          {ko ? '얼마나 확신하나요?' : 'How confident are you?'}{' '}
           <span className="font-mono text-xs text-alabama-crimson normal-case tracking-normal">{confidence}%</span>
         </legend>
         <input
@@ -147,16 +167,18 @@ const PositionInputForm: React.FC<PositionInputFormProps> = ({
           aria-label="Confidence"
         />
         <div className="flex justify-between text-xs text-lyceum-muted mt-1">
-          <span>Not at all</span>
-          <span>Completely</span>
+          <span>{ko ? '전혀 아님' : 'Not at all'}</span>
+          <span>{ko ? '완전히 확신' : 'Completely'}</span>
         </div>
       </fieldset>
 
       <fieldset>
         <legend className="text-sm font-semibold text-lyceum-ink mb-2 uppercase tracking-wide">
-          Rank your value priorities{' '}
+          {ko ? '중요한 가치의 우선순위' : 'Rank your value priorities'}{' '}
           <span className="text-xs font-normal text-lyceum-muted normal-case tracking-normal">
-            (rank {minValues}-{maxValues}; 1 = most important)
+            {ko
+              ? `(${minValues}~${maxValues}개 선택; 1 = 가장 중요)`
+              : `(rank ${minValues}-${maxValues}; 1 = most important)`}
           </span>
         </legend>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">

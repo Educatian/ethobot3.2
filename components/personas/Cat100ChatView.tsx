@@ -28,11 +28,21 @@ const speakerStyles: Record<Cat100Message['speaker'], string> = {
   system: 'self-center bg-lyceum-paper-deep text-lyceum-muted italic text-xs px-3 py-1',
 };
 
-const speakerLabel = (m: Cat100Message): string => {
-  if (m.speaker === 'learner') return 'You';
-  if (m.speaker === 'facilitator') return 'ETHOBOT';
-  if (m.speaker === 'persona') return m.personaName ?? 'Persona';
+const speakerLabel = (m: Cat100Message, ko: boolean): string => {
+  if (m.speaker === 'learner') return ko ? '나' : 'You';
+  if (m.speaker === 'facilitator') return ko ? '에토봇' : 'ETHOBOT';
+  if (m.speaker === 'persona') return m.personaName ?? (ko ? '인물' : 'Persona');
   return '';
+};
+
+// Friendly phase labels. In English we keep the raw code (researcher-facing);
+// for the SNU/Korean cohort we surface a learner-friendly Korean label instead.
+const phaseLabelKo: Record<string, string> = {
+  initializing: '준비 중',
+  idle: '대기 중',
+  in_facilitator: '진행자와 대화 중',
+  in_persona: '인물과 대화 중',
+  in_facilitator_return: '진행자와 정리 중',
 };
 
 const Cat100ChatView: React.FC<Cat100ChatViewProps> = ({
@@ -92,18 +102,25 @@ const Cat100ChatView: React.FC<Cat100ChatViewProps> = ({
       : undefined;
 
   const finishDisabled = !session.isChatReady || session.isLoading;
+  const ko = language === 'ko';
 
   return (
     <div className="grid lg:grid-cols-[1fr_320px] gap-4">
       <section className="flex flex-col h-[640px] bg-lyceum-paper/95 border border-lyceum-line rounded-lg overflow-hidden shadow-ambient">
         <header className="px-4 py-3 border-b border-lyceum-line bg-lyceum-paper-soft text-xs uppercase tracking-wider text-lyceum-muted">
           {scenario.title} ·{' '}
-          <span className="font-mono normal-case tracking-normal">phase: {session.phase}</span>
+          {ko ? (
+            <span className="normal-case tracking-normal">
+              진행 단계: {phaseLabelKo[session.phase] ?? '대화 진행 중'}
+            </span>
+          ) : (
+            <span className="font-mono normal-case tracking-normal">phase: {session.phase}</span>
+          )}
           {session.activePersona && (
             <>
               {' · '}
               <span className="text-alabama-crimson normal-case tracking-normal">
-                with {session.activePersona.name}
+                {ko ? `${session.activePersona.name}와(과) 대화 중` : `with ${session.activePersona.name}`}
               </span>
             </>
           )}
@@ -112,12 +129,14 @@ const Cat100ChatView: React.FC<Cat100ChatViewProps> = ({
         <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-3">
           {!session.isChatReady && (
             <p className="text-sm text-lyceum-muted text-center mt-8 italic">
-              Initializing CAT 100 facilitator…
+              {ko ? '진행자를 준비하는 중입니다…' : 'Initializing CAT 100 facilitator…'}
             </p>
           )}
           {session.isChatReady && session.messages.length === 0 && (
             <p className="text-sm text-lyceum-muted text-center mt-8 italic">
-              Type your opening thought to begin the dialogue.
+              {ko
+                ? '첫 생각을 입력하면 대화가 시작돼요.'
+                : 'Type your opening thought to begin the dialogue.'}
             </p>
           )}
           {session.messages.map(message => {
@@ -128,7 +147,7 @@ const Cat100ChatView: React.FC<Cat100ChatViewProps> = ({
               <div key={message.id} className="flex flex-col gap-1 max-w-[85%] sm:max-w-[75%]">
                 {message.speaker !== 'system' && (
                   <span className="text-[11px] uppercase tracking-wider text-lyceum-muted">
-                    {speakerLabel(message)}
+                    {speakerLabel(message, ko)}
                   </span>
                 )}
                 <div
@@ -144,7 +163,9 @@ const Cat100ChatView: React.FC<Cat100ChatViewProps> = ({
                     onClick={() => session.acceptRecommendation()}
                     className="mt-1 self-start text-xs font-semibold px-3 py-1.5 rounded border-2 border-alabama-crimson text-alabama-crimson hover:bg-alabama-crimson hover:text-white transition-colors"
                   >
-                    Open {message.recommendationPersonaName ?? 'persona'} →
+                    {ko
+                      ? `${message.recommendationPersonaName ?? '인물'}와(과) 대화하기 →`
+                      : `Open ${message.recommendationPersonaName ?? 'persona'} →`}
                   </button>
                 )}
               </div>
@@ -160,7 +181,8 @@ const Cat100ChatView: React.FC<Cat100ChatViewProps> = ({
 
         <div className="px-4 py-3 border-t border-lyceum-line bg-lyceum-paper-soft flex items-center justify-between">
           <span className="text-xs text-lyceum-muted">
-            Personas called: <span className="text-alabama-crimson font-semibold">{session.calledPersonaIds.length}</span> / {scenario.personas.length}
+            {ko ? '참여시킨 인물: ' : 'Personas called: '}
+            <span className="text-alabama-crimson font-semibold">{session.calledPersonaIds.length}</span> / {scenario.personas.length}
           </span>
           <button
             type="button"
@@ -172,19 +194,27 @@ const Cat100ChatView: React.FC<Cat100ChatViewProps> = ({
                 : 'text-alabama-crimson hover:text-crimson-dark'
             }`}
           >
-            End dialogue → record closing position
+            {ko ? '대화 마치기 → 최종 입장 기록' : 'End dialogue → record closing position'}
           </button>
         </div>
       </section>
 
       <aside className="space-y-3">
         <header>
-          <h3 className="text-sm font-semibold text-lyceum-ink uppercase tracking-wide">Stakeholder personas</h3>
+          <h3 className="text-sm font-semibold text-lyceum-ink uppercase tracking-wide">
+            {ko ? '이해관계자' : 'Stakeholder personas'}
+          </h3>
           <p className="text-xs text-lyceum-muted mt-1">
             {condition === StudyCondition.LEARNER_DIRECTED
-              ? 'Click a card to bring that voice into the conversation.'
+              ? ko
+                ? '카드를 누르면 그 인물이 대화에 참여해요.'
+                : 'Click a card to bring that voice into the conversation.'
               : condition === StudyCondition.AI_RECOMMENDED
-              ? 'ETHOBOT will surface a persona when relevant.'
+              ? ko
+                ? '에토봇이 적절한 시점에 인물을 추천해 드려요.'
+                : 'ETHOBOT will surface a persona when relevant.'
+              : ko
+              ? '학습 조건을 선택하면 인물을 불러올 수 있어요.'
               : 'Select a study condition to enable persona invocation.'}
           </p>
         </header>
@@ -195,6 +225,7 @@ const Cat100ChatView: React.FC<Cat100ChatViewProps> = ({
             state={personaCardState(persona)}
             onOpen={onCardOpen}
             showNudge={condition === StudyCondition.LEARNER_DIRECTED}
+            language={language}
           />
         ))}
       </aside>

@@ -8,6 +8,7 @@ interface PersonaPanelCardProps {
   onOpen?: (persona: Persona) => void;
   rationale?: string;
   showNudge?: boolean;
+  language?: string;
 }
 
 const stateClasses: Record<NonNullable<PersonaPanelCardProps['state']>, string> = {
@@ -24,7 +25,9 @@ const PersonaPanelCard: React.FC<PersonaPanelCardProps> = ({
   onOpen,
   rationale,
   showNudge = false,
+  language,
 }) => {
+  const ko = language === 'ko';
   const interactive = state !== 'disabled' && typeof onOpen === 'function';
   const showOpenButton = interactive && (state === 'idle' || state === 'highlighted');
   const showNotification = showNudge && state === 'idle';
@@ -67,16 +70,20 @@ const PersonaPanelCard: React.FC<PersonaPanelCardProps> = ({
           className="mt-3 inline-flex items-center rounded-full border border-alabama-crimson/30 bg-white px-3 py-1.5 text-xs font-semibold text-alabama-crimson hover:border-alabama-crimson hover:bg-crimson-light transition-colors"
           data-action="open-persona"
         >
-          Open voice
+          {ko ? '대화 시작' : 'Open voice'}
         </button>
       )}
 
       {state === 'active' && (
-        <p className="mt-3 text-xs font-semibold text-alabama-crimson uppercase tracking-wide">In conversation...</p>
+        <p className="mt-3 text-xs font-semibold text-alabama-crimson uppercase tracking-wide">
+          {ko ? '대화 중…' : 'In conversation...'}
+        </p>
       )}
 
       {state === 'completed' && (
-        <p className="mt-3 text-xs text-lyceum-muted italic">Spoke with you earlier</p>
+        <p className="mt-3 text-xs text-lyceum-muted italic">
+          {ko ? '앞서 이야기를 나눴어요' : 'Spoke with you earlier'}
+        </p>
       )}
     </article>
   );

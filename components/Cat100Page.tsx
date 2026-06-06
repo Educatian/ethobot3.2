@@ -49,8 +49,9 @@ const COURSE_CONFIG: Record<
     scenarioIds: ['scenario_a_ai_grading', 'scenario_b_genai_content'],
     label: 'CAT 531',
   },
-  // SNU shell reuses the CAT 100 ethics scenarios for now; swap scenariosUrl
-  // to a dedicated /data/scenarios-snu.json when SNU-specific cases are ready.
+  // SNU is bilingual: English default below, Korean scenarios swapped in at runtime
+  // (see courseScenariosUrl) when the cohort toggles to 한국어. Same scenario IDs in
+  // both files, so the Korean set never depends on browser auto-translation.
   SNU: {
     scenariosUrl: '/data/scenarios.json',
     scenarioIds: ['scenario_a_classroom_monitoring', 'scenario_b_edtech_data_sharing'],
@@ -205,6 +206,16 @@ const Cat100Page: React.FC<Cat100PageProps> = ({ onBack, mode = 'cat100', defaul
 
   const condition = identity?.condition ?? null;
   const scenarioIdParam = identity?.scenarioId ?? null;
+  // Korean is for the SNU cohort ONLY. Every other course renders in English even
+  // if a stale `ethobot_language=ko` lingers in localStorage from the landing page,
+  // so non-SNU courses never leak Korean UI, scenarios, or facilitator replies.
+  const uiLanguage = normalizeCourse(identity?.course) === 'SNU' ? language : 'en';
+  const ko = uiLanguage === 'ko';
+  const stanceDisplay = (stance: string | undefined): string => {
+    if (!stance) return '';
+    const koStance: Record<string, string> = { support: '찬성', oppose: '반대', unsure: '잘 모르겠음' };
+    return ko ? koStance[stance] ?? stance : stance.toUpperCase();
+  };
 
   const handleGateAccept = (resolved: Cat100Identity) => {
     persistSessionIdentity(resolved);
@@ -222,7 +233,12 @@ const Cat100Page: React.FC<Cat100PageProps> = ({ onBack, mode = 'cat100', defaul
     };
   }, [identity]);
 
-  const courseScenariosUrl = COURSE_CONFIG[normalizeCourse(identity?.course)].scenariosUrl;
+  // SNU + 한국어 → Korean-localized scenarios; SNU + EN and every other course →
+  // the English default. This keeps non-SNU courses fully English.
+  const courseScenariosUrl =
+    normalizeCourse(identity?.course) === 'SNU' && language === 'ko'
+      ? '/data/scenarios-snu.json'
+      : COURSE_CONFIG[normalizeCourse(identity?.course)].scenariosUrl;
 
   useEffect(() => {
     let cancelled = false;
@@ -391,23 +407,25 @@ const Cat100Page: React.FC<Cat100PageProps> = ({ onBack, mode = 'cat100', defaul
       <p className="text-sm leading-relaxed text-lyceum-ink/85 mb-5">{scenario.scenario}</p>
       <dl className="text-sm space-y-3 mb-6">
         <div>
-          <dt className="font-semibold text-lyceum-ink">Key actors</dt>
+          <dt className="font-semibold text-lyceum-ink">{ko ? '주요 인물' : 'Key actors'}</dt>
           <dd className="text-lyceum-ink/85">{scenario.keyActors.join(', ')}</dd>
         </div>
         <div>
-          <dt className="font-semibold text-lyceum-ink">Core tension</dt>
+          <dt className="font-semibold text-lyceum-ink">{ko ? '핵심 쟁점' : 'Core tension'}</dt>
           <dd className="text-lyceum-ink/85">{scenario.coreTension}</dd>
         </div>
         <div>
-          <dt className="font-semibold text-lyceum-ink">Guiding question</dt>
+          <dt className="font-semibold text-lyceum-ink">{ko ? '생각해 볼 질문' : 'Guiding question'}</dt>
           <dd className="text-lyceum-ink/85">{scenario.guidingQuestion}</dd>
         </div>
       </dl>
 
-      <h3 className="text-sm font-semibold mb-2 text-lyceum-ink uppercase tracking-wide">Personas in this scenario</h3>
+      <h3 className="text-sm font-semibold mb-2 text-lyceum-ink uppercase tracking-wide">
+        {ko ? '이 사례의 이해관계자' : 'Personas in this scenario'}
+      </h3>
       <div className="grid sm:grid-cols-2 gap-3 mb-6">
         {scenario.personas.map(persona => (
-          <PersonaPanelCard key={persona.id} persona={persona} state="disabled" />
+          <PersonaPanelCard key={persona.id} persona={persona} state="disabled" language={uiLanguage} />
         ))}
       </div>
 
@@ -416,7 +434,7 @@ const Cat100Page: React.FC<Cat100PageProps> = ({ onBack, mode = 'cat100', defaul
         onClick={() => setPhase('pre')}
         className="w-full py-3 rounded bg-alabama-crimson text-white text-sm font-semibold tracking-wide hover:bg-crimson-dark transition-colors shadow-ambient"
       >
-        Start: record my initial position
+        {ko ? '시작하기: 내 첫 입장 기록' : 'Start: record my initial position'}
       </button>
     </section>
   );
@@ -424,7 +442,7 @@ const Cat100Page: React.FC<Cat100PageProps> = ({ onBack, mode = 'cat100', defaul
   const renderChat = (scenario: Scenario) => (
     <Cat100ChatView
       scenario={scenario}
-      language={language}
+      language={uiLanguage}
       condition={condition}
       initialPosition={initialPosition}
       logContext={logContext}
@@ -437,34 +455,38 @@ const Cat100Page: React.FC<Cat100PageProps> = ({ onBack, mode = 'cat100', defaul
 
   const renderDebrief = (scenario: Scenario) => (
     <section className="bg-lyceum-paper/95 border border-lyceum-line rounded-lg p-6 max-w-2xl mx-auto shadow-ambient">
-      <h2 className="text-2xl font-headline font-semibold mb-1 text-lyceum-ink">Session complete</h2>
+      <h2 className="text-2xl font-headline font-semibold mb-1 text-lyceum-ink">
+        {ko ? '세션을 마쳤어요' : 'Session complete'}
+      </h2>
       <p className="text-sm text-lyceum-muted mb-5">
-        Thanks for thinking through “{scenario.title}” with us.
+        {ko
+          ? `“${scenario.title}”을(를) 함께 고민해 주셔서 고마워요.`
+          : `Thanks for thinking through “${scenario.title}” with us.`}
       </p>
       <div className="rounded border border-lyceum-line bg-lyceum-paper-soft p-4 text-sm space-y-2">
         <p>
-          <span className="font-semibold text-lyceum-ink">Initial:</span>{' '}
+          <span className="font-semibold text-lyceum-ink">{ko ? '처음 입장:' : 'Initial:'}</span>{' '}
           <span className="font-mono text-lyceum-ink/85">
-            {initialPosition?.stance.toUpperCase()} @ {initialPosition?.confidence}%
+            {stanceDisplay(initialPosition?.stance)} @ {initialPosition?.confidence}%
           </span>
-          ; values [{initialPosition?.values.join(', ')}]
+          {ko ? ' · 중요 가치 [' : '; values ['}{initialPosition?.values.join(', ')}]
         </p>
         <p>
-          <span className="font-semibold text-lyceum-ink">Closing:</span>{' '}
+          <span className="font-semibold text-lyceum-ink">{ko ? '최종 입장:' : 'Closing:'}</span>{' '}
           <span className="font-mono text-lyceum-ink/85">
-            {closingPosition?.stance.toUpperCase()} @ {closingPosition?.confidence}%
+            {stanceDisplay(closingPosition?.stance)} @ {closingPosition?.confidence}%
           </span>
-          ; values [{closingPosition?.values.join(', ')}]
+          {ko ? ' · 중요 가치 [' : '; values ['}{closingPosition?.values.join(', ')}]
         </p>
         {delta && (
           <p className="text-lyceum-ink/85">
-            <span className="font-semibold text-lyceum-ink">Delta: </span>
-            {summarizeDelta(delta)}
+            <span className="font-semibold text-lyceum-ink">{ko ? '변화: ' : 'Delta: '}</span>
+            {summarizeDelta(delta, uiLanguage)}
           </p>
         )}
         {closingReflection && (
           <p className="text-lyceum-ink/85">
-            <span className="font-semibold text-lyceum-ink">Reflection: </span>
+            <span className="font-semibold text-lyceum-ink">{ko ? '돌아보기: ' : 'Reflection: '}</span>
             {closingReflection}
           </p>
         )}
@@ -474,14 +496,14 @@ const Cat100Page: React.FC<Cat100PageProps> = ({ onBack, mode = 'cat100', defaul
         onClick={goToSurvey}
         className="mt-6 w-full py-3 rounded bg-alabama-crimson text-white text-sm font-semibold tracking-wide hover:bg-crimson-dark transition-colors shadow-ambient"
       >
-        Next page →
+        {ko ? '다음 페이지 →' : 'Next page →'}
       </button>
       <button
         type="button"
         onClick={onBack}
         className="mt-3 w-full py-2.5 rounded border border-lyceum-line text-sm text-lyceum-ink hover:bg-lyceum-paper-deep transition-colors"
       >
-        Back to ETHOBOT
+        {ko ? '에토봇으로 돌아가기' : 'Back to ETHOBOT'}
       </button>
     </section>
   );
@@ -514,7 +536,7 @@ const Cat100Page: React.FC<Cat100PageProps> = ({ onBack, mode = 'cat100', defaul
             onClick={onBack}
             className="text-sm text-alabama-crimson hover:underline"
           >
-            {language === 'ko' ? '← ETHOBOT으로' : '← Back to ETHOBOT'}
+            {uiLanguage === 'ko' ? '← 에토봇으로 돌아가기' : '← Back to ETHOBOT'}
           </button>
           {/* KO/EN toggle — bilingual cohorts (SNU) only. */}
           {normalizeCourse(identity.course) === 'SNU' && (
@@ -556,9 +578,11 @@ const Cat100Page: React.FC<Cat100PageProps> = ({ onBack, mode = 'cat100', defaul
         {!activeScenario && (
           <section className="bg-lyceum-paper/95 border border-lyceum-line rounded-lg p-5 shadow-ambient">
             {loadError ? (
-              <p className="text-red-700 text-sm">Unable to load scenarios: {loadError}</p>
+              <p className="text-red-700 text-sm">
+                {ko ? `사례를 불러오지 못했어요: ${loadError}` : `Unable to load scenarios: ${loadError}`}
+              </p>
             ) : (
-              <p className="text-sm text-lyceum-muted">Loading scenarios…</p>
+              <p className="text-sm text-lyceum-muted">{ko ? '사례를 불러오는 중이에요…' : 'Loading scenarios…'}</p>
             )}
           </section>
         )}
@@ -566,7 +590,7 @@ const Cat100Page: React.FC<Cat100PageProps> = ({ onBack, mode = 'cat100', defaul
         {activeScenario && phase === 'intro' && renderIntro(activeScenario)}
 
         {activeScenario && phase === 'pre' && (
-          <PreFormPosition scenario={activeScenario} onSubmit={handlePreFormSubmit} />
+          <PreFormPosition scenario={activeScenario} onSubmit={handlePreFormSubmit} language={uiLanguage} />
         )}
 
         {activeScenario && phase === 'chat' && initialPosition && renderChat(activeScenario)}
@@ -576,6 +600,7 @@ const Cat100Page: React.FC<Cat100PageProps> = ({ onBack, mode = 'cat100', defaul
             scenario={activeScenario}
             initialPosition={initialPosition}
             onSubmit={handlePostFormSubmit}
+            language={uiLanguage}
           />
         )}
 

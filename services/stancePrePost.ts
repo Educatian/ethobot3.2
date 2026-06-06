@@ -87,8 +87,31 @@ export const isPositionInput = (value: unknown): value is PositionInput => {
   );
 };
 
-export const summarizeDelta = (delta: PrePostDelta): string => {
+const stanceShiftKo: Record<PrePostDelta['stanceShift'], string> = {
+  same: '유지',
+  sharpened: '강화',
+  softened: '완화',
+  reversed: '역전',
+};
+
+const stanceKo: Record<string, string> = {
+  support: '찬성',
+  oppose: '반대',
+  unsure: '잘 모르겠음',
+};
+
+const labelStance = (s: string, ko: boolean): string =>
+  ko ? stanceKo[s] ?? s : s;
+
+export const summarizeDelta = (delta: PrePostDelta, language?: string): string => {
   const sign = delta.confidenceDelta >= 0 ? '+' : '';
+  if (language === 'ko') {
+    const valueLine =
+      delta.valuesAdded.length || delta.valuesRemoved.length
+        ? ` 추가된 가치: [${delta.valuesAdded.join(', ') || '—'}]; 빠진 가치: [${delta.valuesRemoved.join(', ') || '—'}].`
+        : ' 중요 가치 순위는 그대로예요.';
+    return `입장 ${stanceShiftKo[delta.stanceShift]} (${labelStance(delta.stanceFrom, true)} → ${labelStance(delta.stanceTo, true)}); 확신도 ${sign}${delta.confidenceDelta}.${valueLine}`;
+  }
   const valueLine =
     delta.valuesAdded.length || delta.valuesRemoved.length
       ? ` Values added: [${delta.valuesAdded.join(', ') || '—'}]; removed: [${delta.valuesRemoved.join(', ') || '—'}].`
