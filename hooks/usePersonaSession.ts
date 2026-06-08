@@ -24,7 +24,11 @@ import {
   createEmptyVocabularyState,
   type VocabularyState,
 } from '../services/vocabularyEmergence';
-import { logCat100Event, type Cat100LogContext } from '../services/cat100Logging';
+import {
+  logCat100Event,
+  logCat100MessageExchange,
+  type Cat100LogContext,
+} from '../services/cat100Logging';
 
 export interface Cat100Message {
   id: string;
@@ -434,7 +438,7 @@ export const usePersonaSession = (args: UsePersonaSessionArgs): UsePersonaSessio
         updateMessage(speakerSlot.id, { text: full || '(no response)' });
 
         if (logContext) {
-          logCat100Event('CAT100_PERSONA_TURN', logContext, {
+          logCat100MessageExchange(logContext, trimmed, full || '(no response)', {
             scenarioId: scenario.id,
             condition: condition ?? ('learner_directed' as StudyCondition),
             turnNumber,
