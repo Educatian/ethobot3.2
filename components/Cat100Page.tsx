@@ -53,7 +53,7 @@ const COURSE_CONFIG: Record<
   // (see courseScenariosUrl) when the cohort toggles to 한국어. Same scenario IDs in
   // both files, so the Korean set never depends on browser auto-translation.
   SNU: {
-    scenariosUrl: '/data/scenarios.json',
+    scenariosUrl: '/data/scenarios-snu.json',
     scenarioIds: ['scenario_a_classroom_monitoring', 'scenario_b_edtech_data_sharing'],
     label: 'DE001',
   },
@@ -209,7 +209,8 @@ const Cat100Page: React.FC<Cat100PageProps> = ({ onBack, mode = 'cat100', defaul
   // Korean is for the SNU cohort ONLY. Every other course renders in English even
   // if a stale `ethobot_language=ko` lingers in localStorage from the landing page,
   // so non-SNU courses never leak Korean UI, scenarios, or facilitator replies.
-  const uiLanguage = normalizeCourse(identity?.course) === 'SNU' ? language : 'en';
+  const courseKey = normalizeCourse(identity?.course);
+  const uiLanguage = courseKey === 'SNU' ? 'ko' : 'en';
   const ko = uiLanguage === 'ko';
   const stanceDisplay = (stance: string | undefined): string => {
     if (!stance) return '';
@@ -224,21 +225,27 @@ const Cat100Page: React.FC<Cat100PageProps> = ({ onBack, mode = 'cat100', defaul
 
   const logContext: Cat100LogContext | null = useMemo(() => {
     if (!identity) return null;
+    const key = normalizeCourse(identity.course);
     return {
       userFullName: identity.participantId,
       course: identity.course,
       sessionId: sessionStartTimeRef.current,
       email: identity.email,
       name: identity.name,
+      language: key === 'SNU' ? 'ko' : 'en',
+      cohort: key,
+      systemContext:
+        key === 'SNU'
+          ? 'SNU Korean university-student AI ethics dialogue'
+          : key === 'CAT531'
+          ? 'CAT531 English graduate instructional-design AI ethics dialogue'
+          : 'CAT100 English Alabama preservice-teacher AI ethics dialogue',
     };
   }, [identity]);
 
   // SNU + 한국어 → Korean-localized scenarios; SNU + EN and every other course →
   // the English default. This keeps non-SNU courses fully English.
-  const courseScenariosUrl =
-    normalizeCourse(identity?.course) === 'SNU' && language === 'ko'
-      ? '/data/scenarios-snu.json'
-      : COURSE_CONFIG[normalizeCourse(identity?.course)].scenariosUrl;
+  const courseScenariosUrl = COURSE_CONFIG[courseKey].scenariosUrl;
 
   useEffect(() => {
     let cancelled = false;
@@ -539,7 +546,7 @@ const Cat100Page: React.FC<Cat100PageProps> = ({ onBack, mode = 'cat100', defaul
             {uiLanguage === 'ko' ? '← 에토봇으로 돌아가기' : '← Back to ETHOBOT'}
           </button>
           {/* KO/EN toggle — bilingual cohorts (SNU) only. */}
-          {normalizeCourse(identity.course) === 'SNU' && (
+          {false && normalizeCourse(identity.course) === 'SNU' && (
             <div className="flex items-center gap-1" role="group" aria-label="Language">
               <button
                 type="button"
@@ -565,7 +572,7 @@ const Cat100Page: React.FC<Cat100PageProps> = ({ onBack, mode = 'cat100', defaul
         </div>
         <h1 className="text-3xl font-headline font-semibold mb-2 text-lyceum-ink">
           {normalizeCourse(identity.course) === 'SNU'
-            ? (language === 'ko' ? 'DE001 — 디지털 교육' : 'DE001 — Digital Education')
+            ? 'DE001 - 디지털 교육'
             : `${COURSE_CONFIG[normalizeCourse(identity.course)].label} — Persona Dialogue`}
         </h1>
         {/* Study condition/participant kept in the DOM for research/QA but hidden from

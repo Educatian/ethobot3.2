@@ -45,6 +45,9 @@ export interface Cat100LogContext {
   sessionId: number | null;
   email?: string;
   name?: string;
+  language?: 'en' | 'ko';
+  cohort?: 'CAT100' | 'CAT531' | 'SNU';
+  systemContext?: string;
 }
 
 const SHEETS_API_URL = 'https://sheets-api-function-515497328571.europe-west1.run.app/';
@@ -78,7 +81,14 @@ const insertIntoCat100Events = async (
           scenario_id: payload.scenarioId ?? null,
           condition: payload.condition ?? null,
           event_type: eventType,
-          details_json: { ...payload, email: context.email, name: context.name },
+          details_json: {
+            ...payload,
+            email: context.email,
+            name: context.name,
+            language: context.language,
+            cohort: context.cohort,
+            systemContext: context.systemContext,
+          },
         },
       ]);
     if (error) {
@@ -111,7 +121,15 @@ export const logCat100Event = (
     userRealName: context.name ?? null,
     userMessage: null,
     botResponse: null,
-    details_json: { ...payload, sessionId: context.sessionId, email: context.email, name: context.name },
+    details_json: {
+      ...payload,
+      sessionId: context.sessionId,
+      email: context.email,
+      name: context.name,
+      language: context.language,
+      cohort: context.cohort,
+      systemContext: context.systemContext,
+    },
   });
 
   // 3) Supabase cat100_events — anon-insert RLS allows URL-based participants
@@ -133,7 +151,15 @@ export const logCat100MessageExchange = (
     userRealName: context.name ?? null,
     userMessage,
     botResponse,
-    details_json: { ...payload, sessionId: context.sessionId, email: context.email, name: context.name },
+    details_json: {
+      ...payload,
+      sessionId: context.sessionId,
+      email: context.email,
+      name: context.name,
+      language: context.language,
+      cohort: context.cohort,
+      systemContext: context.systemContext,
+    },
   });
 
   void insertIntoCat100Events('CAT100_PERSONA_TURN' as Cat100EventType, context, {
