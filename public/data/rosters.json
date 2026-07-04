@@ -113,45 +113,62 @@
    ]
   },
   {
-   "section": "CAT100-911-921",
+   "section": "CAT100-SUMMER2",
    "course": "CAT100",
+   "term": "Summer 2",
    "passcode": "vnqu6y",
    "students": [
     {
      "name": "Ryan Amos",
-     "pid": "CAT100-911-921-01"
-    },
-    {
-     "name": "Bayler Bufkin",
-     "pid": "CAT100-911-921-02"
+     "pid": "CAT100-S2-01"
     },
     {
      "name": "Abigail Carter",
-     "pid": "CAT100-911-921-03"
+     "pid": "CAT100-S2-02"
+    },
+    {
+     "name": "Dylan Fernandes",
+     "pid": "CAT100-S2-03"
+    },
+    {
+     "name": "Andrew Frame",
+     "pid": "CAT100-S2-04"
     },
     {
      "name": "Mary Heninger",
-     "pid": "CAT100-911-921-04"
+     "pid": "CAT100-S2-05"
     },
     {
      "name": "John Hillman",
-     "pid": "CAT100-911-921-05"
+     "pid": "CAT100-S2-06"
     },
     {
      "name": "Charlie Kramer",
-     "pid": "CAT100-911-921-06"
+     "pid": "CAT100-S2-07"
+    },
+    {
+     "name": "Brandon Lereah",
+     "pid": "CAT100-S2-08"
     },
     {
      "name": "Lexi Moss",
-     "pid": "CAT100-911-921-07"
+     "pid": "CAT100-S2-09"
     },
     {
      "name": "Ariana Rodriguez",
-     "pid": "CAT100-911-921-08"
+     "pid": "CAT100-S2-10"
+    },
+    {
+     "name": "Troy Sezer",
+     "pid": "CAT100-S2-11"
+    },
+    {
+     "name": "Spencer Waddell",
+     "pid": "CAT100-S2-12"
     },
     {
      "name": "Duncan Williams",
-     "pid": "CAT100-911-921-09"
+     "pid": "CAT100-S2-13"
     }
    ]
   },
