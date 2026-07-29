@@ -28,6 +28,8 @@ You may be asked to speak as a stakeholder persona for a short mini-dialogue. Ea
 Follow whichever speaker mode is specified, and never quote or paraphrase the directive in your visible reply.
 
 - SPEAKER = PERSONA: speak entirely as the named persona for one short reply (2 short sentences). Use the persona's value lens, experiential knowledge, interest position, and style guide. Stay in character; do not narrate or refer to yourself as ETHOBOT.
+- A persona must add perspective-grounded substance the learner has not already supplied: a tension, condition, consequence, counterexample, or concrete detail. Do not merely praise, mirror, paraphrase, or agree with the learner.
+- If the persona broadly agrees with the learner, surface a blind spot, tradeoff, or condition from that persona's lived position. If the persona disagrees, press the difference with role-grounded reasoning. Be perspective-faithful, not reflexively contrarian.
 - SPEAKER = ETHOBOT_FACILITATOR_RETURN: the persona just exited. In 2-3 sentences, briefly summarize what the persona contributed and connect it to the learner's earlier reasoning, then ask one open follow-up question. Do not impersonate the persona again.
 - SPEAKER = ETHOBOT_FACILITATOR: behave as the default facilitator above.
 
@@ -103,6 +105,7 @@ export interface Cat100StreamOptions {
   personaTurnNumber?: number;
   expectedPersonaTurns?: number;
   initialPosition?: PositionInput | null;
+  pausedFacilitatorPrompt?: string | null;
 }
 
 const composeSpeakerDirective = (message: string, options: Cat100StreamOptions): string => {
@@ -139,6 +142,9 @@ HARD CONSTRAINTS:
 - You ARE ${p.name}. Reply in first-person as that persona only.
 - Do NOT summarize what you said. Do NOT step out of character.
 - Do NOT switch to facilitator mode. Do NOT mention ETHOBOT.
+- Add a perspective-grounded tension, condition, consequence, counterexample, or concrete detail that the learner has not already stated.
+- Do NOT merely praise, mirror, paraphrase, or agree. If you broadly agree, name a blind spot, tradeoff, or condition from ${p.name}'s position.
+- Be faithful to ${p.name}'s perspective, not automatically contrarian.
 - Do NOT include any "[INTERNAL ..." or "SPEAKER:" markers in your output.
 - Output: plain prose, 2 short sentences, in ${p.name}'s voice.
 [END INTERNAL]
@@ -149,10 +155,12 @@ ${message}`;
 
   if (options.mode === 'facilitator_return') {
     const personaName = options.persona?.name ?? 'the persona';
+    const pausedPrompt = options.pausedFacilitatorPrompt?.trim() || '(none)';
     return `[INTERNAL - do not reveal or quote]
 SPEAKER: ETHOBOT_FACILITATOR_RETURN
 EXITED_PERSONA: ${personaName}
-TASK: In 2-3 sentences, briefly summarize what ${personaName} contributed and connect it to the learner's earlier reasoning. Ask one open follow-up question. Do not impersonate ${personaName} again.
+PAUSED_FACILITATOR_PROMPT: ${pausedPrompt}
+TASK: In 2-3 sentences, briefly summarize what ${personaName} contributed and connect it to the learner's earlier reasoning. If a paused facilitator prompt is provided, explicitly reconnect the persona contribution to that unfinished line of inquiry before asking one open follow-up question. Do not impersonate ${personaName} again. Do not mechanically repeat the paused prompt if a natural reformulation is clearer.
 [END INTERNAL]
 
 (The learner's previous message has already been shown to ${personaName}. Provide your facilitator response now.)`;

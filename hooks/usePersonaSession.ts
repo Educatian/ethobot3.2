@@ -82,6 +82,8 @@ export interface UsePersonaSessionResult {
   vocabularyEmergences: VocabularyEmergence[];
   recentlyExitedPersonaId?: string;
   currentRecommendation: ActiveRecommendation | null;
+  pendingFacilitatorPrompt: string | null;
+  suspendedFacilitatorPrompt: string | null;
   sendMessage: (text: string) => Promise<void>;
   openPersona: (persona: Persona) => Promise<void>;
   acceptRecommendation: () => Promise<void>;
@@ -89,6 +91,19 @@ export interface UsePersonaSessionResult {
 
 const now = () => new Date().toISOString();
 const id = (prefix: string) => `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+const extractLastQuestion = (text: string): string | null => {
+  const trimmed = text.trim();
+  const questionEnd = Math.max(trimmed.lastIndexOf('?'), trimmed.lastIndexOf('？'));
+  if (questionEnd < 0) return null;
+  const priorBoundary = Math.max(
+    trimmed.lastIndexOf('.', questionEnd - 1),
+    trimmed.lastIndexOf('!', questionEnd - 1),
+    trimmed.lastIndexOf('?', questionEnd - 1),
+    trimmed.lastIndexOf('？', questionEnd - 1),
+    trimmed.lastIndexOf('\n', questionEnd - 1)
+  );
+  return trimmed.slice(priorBoundary + 1, questionEnd + 1).trim() || null;
+};
 
 export const usePersonaSession = (args: UsePersonaSessionArgs): UsePersonaSessionResult => {
   const {
@@ -129,11 +144,27 @@ export const usePersonaSession = (args: UsePersonaSessionArgs): UsePersonaSessio
   const currentExpectedTurnsRef = useRef<number>(2);
   const [currentRecommendation, setCurrentRecommendation] =
     useState<ActiveRecommendation | null>(null);
+  const [pendingFacilitatorPrompt, setPendingFacilitatorPrompt] = useState<string | null>(null);
+  const [suspendedFacilitatorPrompt, setSuspendedFacilitatorPrompt] = useState<string | null>(null);
+  const pendingFacilitatorPromptRef = useRef<string | null>(null);
+  const suspendedFacilitatorPromptRef = useRef<string | null>(null);
+
+  const updatePendingFacilitatorPrompt = useCallback((prompt: string | null) => {
+    pendingFacilitatorPromptRef.current = prompt;
+    setPendingFacilitatorPrompt(prompt);
+  }, []);
+
+  const updateSuspendedFacilitatorPrompt = useCallback((prompt: string | null) => {
+    suspendedFacilitatorPromptRef.current = prompt;
+    setSuspendedFacilitatorPrompt(prompt);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
     setIsChatReady(false);
     setPhase('initializing');
+    updatePendingFacilitatorPrompt(null);
+    updateSuspendedFacilitatorPrompt(null);
     const resuming = Array.isArray(resumeMessages) && resumeMessages.length > 0;
     initializeCat100Chat(language, scenario, initialPosition).then(async success => {
       if (cancelled) return;
@@ -155,6 +186,10 @@ export const usePersonaSession = (args: UsePersonaSessionArgs): UsePersonaSessio
         setCalledPersonaIds(personaIds);
         calledPersonaIdsRef.current = personaIds;
         overallTurnRef.current = saved.reduce((mx, m) => Math.max(mx, m.turnNumber || 0), 0);
+        const latestFacilitator = [...saved].reverse().find(m => m.speaker === 'facilitator');
+        updatePendingFacilitatorPrompt(
+          latestFacilitator ? extractLastQuestion(latestFacilitator.text) : null
+        );
         seedCat100History(
           saved
             .filter(m => m.speaker !== 'system')
@@ -209,9 +244,11 @@ export const usePersonaSession = (args: UsePersonaSessionArgs): UsePersonaSessio
           }
           if (!cancelled) {
             const fallbackEmpty = language === 'ko' ? '(첫 메시지를 불러오지 못했어요)' : '(opening unavailable)';
+            const openingText = full || fallbackEmpty;
             setMessages(prev =>
-              prev.map(m => (m.id === openingId ? { ...m, text: full || fallbackEmpty } : m))
+              prev.map(m => (m.id === openingId ? { ...m, text: openingText } : m))
             );
+            updatePendingFacilitatorPrompt(extractLastQuestion(openingText));
           }
         } catch (error) {
           if (!cancelled) {
@@ -222,6 +259,7 @@ export const usePersonaSession = (args: UsePersonaSessionArgs): UsePersonaSessio
             setMessages(prev =>
               prev.map(m => (m.id === openingId ? { ...m, text: fallbackOpening } : m))
             );
+            updatePendingFacilitatorPrompt(extractLastQuestion(fallbackOpening));
           }
         } finally {
           if (!cancelled) setIsLoading(false);
@@ -232,7 +270,7 @@ export const usePersonaSession = (args: UsePersonaSessionArgs): UsePersonaSessio
       cancelled = true;
       resetCat100Chat();
     };
-  }, [language, scenario.id, initialPosition?.recordedAt]);
+  }, [language, scenario.id, initialPosition?.recordedAt, updatePendingFacilitatorPrompt, updateSuspendedFacilitatorPrompt]);
 
   const appendMessage = useCallback((message: Cat100Message) => {
     setMessages(prev => {
@@ -346,7 +384,7 @@ export const usePersonaSession = (args: UsePersonaSessionArgs): UsePersonaSessio
   );
 
   const streamFacilitatorReturn = useCallback(
-    async (persona: Persona) => {
+    async (persona: Persona, pausedPrompt: string | null) => {
       const botId = id('facilitator-return');
       appendMessage({
         id: botId,
@@ -360,12 +398,16 @@ export const usePersonaSession = (args: UsePersonaSessionArgs): UsePersonaSessio
         const stream = streamCat100Chat('', {
           mode: 'facilitator_return',
           persona,
+          pausedFacilitatorPrompt: pausedPrompt,
         });
         for await (const chunk of stream) {
           full += chunk ?? '';
           updateMessage(botId, { text: full + '...' });
         }
-        updateMessage(botId, { text: full || '(facilitator response unavailable)' });
+        const responseText = full || '(facilitator response unavailable)';
+        updateMessage(botId, { text: responseText });
+        updateSuspendedFacilitatorPrompt(null);
+        updatePendingFacilitatorPrompt(extractLastQuestion(responseText));
         if (logContext) {
           logCat100Event('CAT100_PERSONA_EXITED', logContext, {
             scenarioId: scenario.id,
@@ -376,10 +418,13 @@ export const usePersonaSession = (args: UsePersonaSessionArgs): UsePersonaSessio
           });
         }
       } catch (error) {
-        updateMessage(botId, { text: 'Facilitator could not return. Please continue.' });
+        const fallback = 'Facilitator could not return. Please continue.';
+        updateMessage(botId, { text: fallback });
+        updateSuspendedFacilitatorPrompt(null);
+        updatePendingFacilitatorPrompt(null);
       }
     },
-    [appendMessage, condition, logContext, scenario.id, updateMessage]
+    [appendMessage, condition, logContext, scenario.id, updateMessage, updatePendingFacilitatorPrompt, updateSuspendedFacilitatorPrompt]
   );
 
   const sendMessage = useCallback(
@@ -400,6 +445,7 @@ export const usePersonaSession = (args: UsePersonaSessionArgs): UsePersonaSessio
       setIsLoading(true);
 
       const inPersona = phase === 'in_persona' && activePersona !== null;
+      if (!inPersona) updatePendingFacilitatorPrompt(null);
       if (inPersona) personaTurnRef.current += 1;
 
       trackVocabulary(trimmed, turnNumber);
@@ -435,7 +481,9 @@ export const usePersonaSession = (args: UsePersonaSessionArgs): UsePersonaSessio
           full += chunk ?? '';
           updateMessage(speakerSlot.id, { text: full + '...' });
         }
-        updateMessage(speakerSlot.id, { text: full || '(no response)' });
+        const responseText = full || '(no response)';
+        updateMessage(speakerSlot.id, { text: responseText });
+        if (!inPersona) updatePendingFacilitatorPrompt(extractLastQuestion(responseText));
 
         if (logContext) {
           logCat100MessageExchange(logContext, trimmed, full || '(no response)', {
@@ -470,7 +518,7 @@ export const usePersonaSession = (args: UsePersonaSessionArgs): UsePersonaSessio
           personaEnteredAtRef.current = null;
           personaInvocationLatencyRef.current = undefined;
           setPhase('in_facilitator_return');
-          await streamFacilitatorReturn(exitedPersona);
+          await streamFacilitatorReturn(exitedPersona, suspendedFacilitatorPromptRef.current);
           setPhase('in_facilitator');
         }
 
@@ -500,6 +548,7 @@ export const usePersonaSession = (args: UsePersonaSessionArgs): UsePersonaSessio
       streamFacilitatorReturn,
       trackVocabulary,
       updateMessage,
+      updatePendingFacilitatorPrompt,
     ]
   );
 
@@ -515,6 +564,12 @@ export const usePersonaSession = (args: UsePersonaSessionArgs): UsePersonaSessio
         acceptedRec && recommendationOfferedAtMsRef.current !== null
           ? Date.now() - recommendationOfferedAtMsRef.current
           : undefined;
+
+      const promptToPause = pendingFacilitatorPromptRef.current;
+      if (promptToPause) {
+        updatePendingFacilitatorPrompt(null);
+        updateSuspendedFacilitatorPrompt(promptToPause);
+      }
 
       setActivePersona(persona);
       setCalledPersonaIds(prev => [...prev, persona.id]);
@@ -542,6 +597,21 @@ export const usePersonaSession = (args: UsePersonaSessionArgs): UsePersonaSessio
         timestamp: now(),
         turnNumber: overallTurnRef.current,
       });
+
+      if (promptToPause) {
+        appendMessage({
+          id: id('system-pause'),
+          speaker: 'system',
+          personaId: persona.id,
+          personaName: persona.name,
+          text:
+            language === 'ko'
+              ? `Ethobot의 질문을 잠시 보류했어요. ${persona.name}와의 대화가 끝나면 이 질문으로 다시 연결할게요.`
+              : `ETHOBOT's question is paused. We will reconnect to it after the conversation with ${persona.name}.`,
+          timestamp: now(),
+          turnNumber: overallTurnRef.current,
+        });
+      }
 
       if (logContext) {
         logCat100Event('CAT100_PERSONA_OPENED', logContext, {
@@ -600,6 +670,8 @@ export const usePersonaSession = (args: UsePersonaSessionArgs): UsePersonaSessio
       logContext,
       scenario.id,
       updateMessage,
+      updatePendingFacilitatorPrompt,
+      updateSuspendedFacilitatorPrompt,
     ]
   );
 
@@ -629,6 +701,8 @@ export const usePersonaSession = (args: UsePersonaSessionArgs): UsePersonaSessio
     vocabularyEmergences,
     recentlyExitedPersonaId,
     currentRecommendation,
+    pendingFacilitatorPrompt,
+    suspendedFacilitatorPrompt,
     sendMessage,
     openPersona,
     acceptRecommendation,

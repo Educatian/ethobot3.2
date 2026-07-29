@@ -126,6 +126,23 @@ const Cat100ChatView: React.FC<Cat100ChatViewProps> = ({
           )}
         </header>
 
+        {session.activePersona && session.suspendedFacilitatorPrompt && (
+          <div
+            data-testid="paused-facilitator-prompt"
+            className="mx-4 mt-3 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-950"
+          >
+            <p className="font-semibold">
+              {ko ? '보류 중인 Ethobot 질문' : 'Paused ETHOBOT question'}
+            </p>
+            <p className="mt-1 leading-relaxed">{session.suspendedFacilitatorPrompt}</p>
+            <p className="mt-1 text-amber-800">
+              {ko
+                ? `${session.activePersona.name}와의 대화가 끝나면 이 질문으로 다시 돌아옵니다.`
+                : `We will return to this after your conversation with ${session.activePersona.name}.`}
+            </p>
+          </div>
+        )}
+
         <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-3">
           {!session.isChatReady && (
             <p className="text-sm text-lyceum-muted text-center mt-8 italic">
@@ -177,6 +194,20 @@ const Cat100ChatView: React.FC<Cat100ChatViewProps> = ({
           onSend={session.sendMessage}
           isLoading={session.isLoading || !session.isChatReady}
           onLogClick={handleLogClick}
+          placeholder={
+            session.activePersona
+              ? ko
+                ? `${session.activePersona.name}에게 답변을 입력하세요…`
+                : `Reply to ${session.activePersona.name}…`
+              : undefined
+          }
+          sendTitle={
+            session.activePersona
+              ? ko
+                ? `${session.activePersona.name}에게 메시지 보내기`
+                : `Send your message to ${session.activePersona.name}`
+              : undefined
+          }
         />
 
         <div className="px-4 py-3 border-t border-lyceum-line bg-lyceum-paper-soft flex items-center justify-between">

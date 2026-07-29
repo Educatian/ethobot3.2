@@ -203,7 +203,7 @@ const setRangeValue = async (locator: Locator, value: string) => {
   }, value);
 };
 
-const installGeminiMock = async (page: Page) => {
+const installGeminiMock = async (page: Page, capturedBodies?: any[]) => {
   // Intercept the new /api/cat100-chat Edge function path.
   await page.route('**/api/cat100-chat', async (route: Route) => {
     let postBody: any = null;
@@ -212,6 +212,7 @@ const installGeminiMock = async (page: Page) => {
     } catch {
       postBody = null;
     }
+    capturedBodies?.push(postBody);
     const text = responseFor(postBody);
     await route.fulfill({
       status: 200,
@@ -367,6 +368,54 @@ test.describe('Proposal fidelity (data + UI)', () => {
 });
 
 test.describe('Learner-directed (LD) — proposal-faithful student journey', () => {
+  test('persona-call-pauses-and-reconnects-unanswered-facilitator-question', async ({ page }) => {
+    const runtime = captureRuntimeErrors(page);
+    const capturedBodies: any[] = [];
+    await installGeminiMock(page, capturedBodies);
+    await page.goto('/cat100?condition=ld&scenario=a&personaTurns=2');
+
+    await page.getByRole('button', { name: /Start: record my initial position/i }).click();
+    await fillPositionForm(page, {
+      stance: 'Support',
+      confidence: '80',
+      values: ['Safety', 'Accountability'],
+    });
+    await page.getByRole('button', { name: /Start the dialogue/i }).click();
+    await expect(page.getByText(/What feels most compelling/i)).toBeVisible();
+
+    const jordanCard = page.locator('article[data-persona-id="scenario_a_jordan"]');
+    await jordanCard.locator('[data-action="open-persona"]').click();
+
+    const paused = page.getByTestId('paused-facilitator-prompt');
+    await expect(paused).toBeVisible();
+    await expect(paused).toContainText(/What feels most compelling/i);
+    const chatInput = page.locator('textarea[placeholder]').first();
+    await expect(chatInput).toHaveAttribute('placeholder', /Reply to Jordan/i);
+
+    const personaRequest = capturedBodies.find(body =>
+      lastUserText(body).includes('SPEAKER: PERSONA')
+    );
+    expect(personaRequest?.messages?.[0]?.content).toContain(
+      'Do not merely praise, mirror, paraphrase, or agree'
+    );
+    expect(lastUserText(personaRequest)).toContain('blind spot, tradeoff, or condition');
+
+    await studentType(chatInput, 'I still think the tool could help teachers notice students.');
+    await chatInput.press('Enter');
+    await readingPause(page, 250);
+    await studentType(chatInput, 'But I can see how being watched could change student behavior.');
+    await chatInput.press('Enter');
+
+    await expect(jordanCard).toHaveAttribute('data-state', 'completed');
+    await expect(paused).toHaveCount(0);
+    const returnRequest = [...capturedBodies]
+      .reverse()
+      .find(body => lastUserText(body).includes('SPEAKER: ETHOBOT_FACILITATOR_RETURN'));
+    expect(lastUserText(returnRequest)).toContain('PAUSED_FACILITATOR_PROMPT:');
+    expect(lastUserText(returnRequest)).toContain('What feels most compelling');
+    expect(runtime.errors).toEqual([]);
+  });
+
   test('ld-full-arc-scenario-a: support 80% [safety, accountability] → unsure 50% [privacy, fairness, safety]', async ({
     page,
   }) => {
