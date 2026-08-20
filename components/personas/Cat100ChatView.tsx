@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { StudyCondition, type Persona, type PositionInput, type Scenario } from '../../types';
 import {
   usePersonaSession,
@@ -72,6 +72,18 @@ const Cat100ChatView: React.FC<Cat100ChatViewProps> = ({
   }, [session.messages, onMessagesChange]);
 
   const scrollRef = useRef<HTMLDivElement | null>(null);
+  const [showFinishReview, setShowFinishReview] = useState(false);
+  const [elapsedMinutes, setElapsedMinutes] = useState(0);
+  const sessionStartedAtRef = useRef(Date.now());
+
+  useEffect(() => {
+    const updateElapsed = () => {
+      setElapsedMinutes(Math.floor((Date.now() - sessionStartedAtRef.current) / 60000));
+    };
+    updateElapsed();
+    const timer = window.setInterval(updateElapsed, 30000);
+    return () => window.clearInterval(timer);
+  }, []);
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
@@ -103,6 +115,16 @@ const Cat100ChatView: React.FC<Cat100ChatViewProps> = ({
 
   const finishDisabled = !session.isChatReady || session.isLoading;
   const ko = language === 'ko';
+  const unresolvedPrompt =
+    session.suspendedFacilitatorPrompt ?? session.pendingFacilitatorPrompt;
+
+  const handleFinishRequest = () => {
+    if (session.activePersona || unresolvedPrompt) {
+      setShowFinishReview(true);
+      return;
+    }
+    onFinish();
+  };
 
   return (
     <div className="grid lg:grid-cols-[1fr_320px] gap-4">
@@ -140,6 +162,18 @@ const Cat100ChatView: React.FC<Cat100ChatViewProps> = ({
                 ? `${session.activePersona.name}와의 대화가 끝나면 이 질문으로 다시 돌아옵니다.`
                 : `We will return to this after your conversation with ${session.activePersona.name}.`}
             </p>
+          </div>
+        )}
+
+        {!session.activePersona && session.pendingFacilitatorPrompt && (
+          <div
+            data-testid="open-facilitator-prompt"
+            className="mx-4 mt-3 rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 text-xs text-sky-950"
+          >
+            <p className="font-semibold">
+              {ko ? '답변을 기다리는 Ethobot 질문' : 'Open ETHOBOT question'}
+            </p>
+            <p className="mt-1 leading-relaxed">{session.pendingFacilitatorPrompt}</p>
           </div>
         )}
 
@@ -210,14 +244,59 @@ const Cat100ChatView: React.FC<Cat100ChatViewProps> = ({
           }
         />
 
-        <div className="px-4 py-3 border-t border-lyceum-line bg-lyceum-paper-soft flex items-center justify-between">
-          <span className="text-xs text-lyceum-muted">
-            {ko ? '지금까지 부른 인물: ' : 'Personas called: '}
-            <span className="text-alabama-crimson font-semibold">{session.calledPersonaIds.length}</span> / {scenario.personas.length}
-          </span>
+        {showFinishReview && (
+          <div
+            data-testid="finish-review-warning"
+            className="mx-4 mb-3 rounded-lg border border-amber-300 bg-amber-50 px-3 py-3 text-xs text-amber-950"
+          >
+            <p className="font-semibold">{ko ? '마치기 전 확인' : 'Before you finish'}</p>
+            {session.activePersona && (
+              <p className="mt-1">
+                {ko
+                  ? `${session.activePersona.name}와의 짧은 대화가 아직 진행 중입니다.`
+                  : `Your short conversation with ${session.activePersona.name} is still in progress.`}
+              </p>
+            )}
+            {unresolvedPrompt && (
+              <p className="mt-1 leading-relaxed">
+                {ko ? '아직 답하지 않은 질문: ' : 'One question is still open: '}
+                <span className="font-medium">{unresolvedPrompt}</span>
+              </p>
+            )}
+            <div className="mt-3 flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => setShowFinishReview(false)}
+                className="rounded border border-amber-400 bg-white px-3 py-1.5 font-semibold text-amber-950"
+              >
+                {ko ? '대화 계속하기' : 'Keep reflecting'}
+              </button>
+              <button
+                type="button"
+                onClick={onFinish}
+                className="rounded bg-alabama-crimson px-3 py-1.5 font-semibold text-white"
+              >
+                {ko ? '그대로 마치기' : 'End anyway'}
+              </button>
+            </div>
+          </div>
+        )}
+
+        <div className="px-4 py-3 border-t border-lyceum-line bg-lyceum-paper-soft flex items-center justify-between gap-3">
+          <div className="text-xs text-lyceum-muted">
+            <p>
+              {ko ? '지금까지 부른 인물: ' : 'Personas called: '}
+              <span className="text-alabama-crimson font-semibold">{session.calledPersonaIds.length}</span> / {scenario.personas.length}
+            </p>
+            <p className="mt-0.5 text-[11px]">
+              {ko
+                ? `권장 성찰 시간 8–12분 · 경과 ${elapsedMinutes}분`
+                : `Suggested reflection time: 8–12 min · elapsed: ${elapsedMinutes} min`}
+            </p>
+          </div>
           <button
             type="button"
-            onClick={onFinish}
+            onClick={handleFinishRequest}
             disabled={finishDisabled}
             className={`text-xs font-semibold ${
               finishDisabled

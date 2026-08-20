@@ -273,6 +273,14 @@ const studentType = async (input: Locator, text: string, opts?: { delay?: number
 // "Reading pause" — a few hundred ms between bot replies, like a real student.
 const readingPause = (page: Page, ms = 300) => page.waitForTimeout(ms);
 
+const finishDialogue = async (page: Page) => {
+  await page.getByRole('button', { name: /End dialogue/i }).click();
+  const reviewWarning = page.getByTestId('finish-review-warning');
+  if (await reviewWarning.isVisible()) {
+    await page.getByRole('button', { name: /End anyway/i }).click();
+  }
+};
+
 interface FillPositionInput {
   stance: 'Support' | 'Oppose' | 'Unsure';
   confidence: string;
@@ -381,7 +389,7 @@ test.describe('Learner-directed (LD) — proposal-faithful student journey', () 
       values: ['Safety', 'Accountability'],
     });
     await page.getByRole('button', { name: /Start the dialogue/i }).click();
-    await expect(page.getByText(/What feels most compelling/i)).toBeVisible();
+    await expect(page.getByText(/What feels most compelling/i).last()).toBeVisible();
 
     const jordanCard = page.locator('article[data-persona-id="scenario_a_jordan"]');
     await jordanCard.locator('[data-action="open-persona"]').click();
@@ -408,12 +416,51 @@ test.describe('Learner-directed (LD) — proposal-faithful student journey', () 
 
     await expect(jordanCard).toHaveAttribute('data-state', 'completed');
     await expect(paused).toHaveCount(0);
+    const reopenedQuestion = page.getByTestId('open-facilitator-prompt');
+    await expect(reopenedQuestion).toBeVisible();
+    await expect(reopenedQuestion).toContainText(/What feels most compelling/i);
+    await expect(
+      page.getByText(/Let's return to the paused question: What feels most compelling/i)
+    ).toBeVisible();
     const returnRequest = [...capturedBodies]
       .reverse()
       .find(body => lastUserText(body).includes('SPEAKER: ETHOBOT_FACILITATOR_RETURN'));
     expect(lastUserText(returnRequest)).toContain('PAUSED_FACILITATOR_PROMPT:');
     expect(lastUserText(returnRequest)).toContain('What feels most compelling');
     expect(runtime.errors).toEqual([]);
+  });
+
+  test('exit intent preserves an unanswered question and makes closure explicit', async ({
+    page,
+  }) => {
+    await installGeminiMock(page);
+    await page.goto('/cat100?condition=ld&scenario=a&personaTurns=2');
+
+    await page.getByRole('button', { name: /Start: record my initial position/i }).click();
+    await fillPositionForm(page, {
+      stance: 'Support',
+      confidence: '70',
+      values: ['Privacy', 'Safety'],
+    });
+    await page.getByRole('button', { name: /Start the dialogue/i }).click();
+
+    const openQuestion = page.getByTestId('open-facilitator-prompt');
+    await expect(openQuestion).toContainText(/What feels most compelling/i);
+
+    const chatInput = page.locator('textarea[placeholder]').first();
+    await studentType(chatInput, 'I need to end the conversation now.');
+    await chatInput.press('Enter');
+
+    await expect(page.getByText(/Before we close, one question is still open/i)).toBeVisible();
+    await expect(openQuestion).toContainText(/What feels most compelling/i);
+    await expect(page.getByText(/Suggested reflection time: 8–12 min/i)).toBeVisible();
+
+    await page.getByRole('button', { name: /End dialogue/i }).click();
+    const finishWarning = page.getByTestId('finish-review-warning');
+    await expect(finishWarning).toContainText(/One question is still open/i);
+    await expect(finishWarning).toContainText(/What feels most compelling/i);
+    await page.getByRole('button', { name: /End anyway/i }).click();
+    await expect(page.getByRole('heading', { name: /Where do you stand now/i })).toBeVisible();
   });
 
   test('ld-full-arc-scenario-a: support 80% [safety, accountability] → unsure 50% [privacy, fairness, safety]', async ({
@@ -470,7 +517,7 @@ test.describe('Learner-directed (LD) — proposal-faithful student journey', () 
     await page.screenshot({ path: 'test-results/ld-a-05-park-exited.png', fullPage: true });
 
     await expect(page.getByText(/Personas called: 2 \/ 4/)).toBeVisible();
-    await page.getByRole('button', { name: /End dialogue/i }).click();
+    await finishDialogue(page);
 
     await expect(page.getByRole('heading', { name: /Where do you stand now/i })).toBeVisible();
     await fillPositionForm(page, {
@@ -569,7 +616,7 @@ test.describe('Learner-directed (LD) — proposal-faithful student journey', () 
     await expect(page.getByText(/parent's perspective/i).first()).toBeVisible();
     await expect(page.getByText(/de-identified/i).first()).toBeVisible();
 
-    await page.getByRole('button', { name: /End dialogue/i }).click();
+    await finishDialogue(page);
     await expect(page.getByRole('heading', { name: /Where do you stand now/i })).toBeVisible();
     await fillPositionForm(page, {
       stance: 'Unsure',
@@ -842,7 +889,7 @@ test.describe('Logging instrumentation (logContext threading)', () => {
     });
     await expect(page.getByText(/surveillance reshapes student behavior/i)).toBeVisible();
 
-    await page.getByRole('button', { name: /End dialogue/i }).click();
+    await finishDialogue(page);
     await fillPositionForm(page, {
       stance: 'Unsure',
       confidence: '50',
@@ -1002,7 +1049,7 @@ test.describe('Pre/Post stance-shift permutations (full stancePrePost coverage)'
     await fillPositionForm(page, pre);
     await page.getByRole('button', { name: /Start the dialogue/i }).click();
     await expect(page.getByText(/Stakeholder personas/i)).toBeVisible();
-    await page.getByRole('button', { name: /End dialogue/i }).click();
+    await finishDialogue(page);
     await fillPositionForm(page, post);
     await page.getByRole('button', { name: /Record my closing position/i }).click();
   };
@@ -1070,7 +1117,7 @@ test.describe('Persona invocation edge cases', () => {
     await expect(page.getByText(/Stakeholder personas/i)).toBeVisible();
     await expect(page.getByText(/Personas called: 0 \/ 4/)).toBeVisible();
 
-    await page.getByRole('button', { name: /End dialogue/i }).click();
+    await finishDialogue(page);
     await fillPositionForm(page, {
       stance: 'Unsure',
       confidence: '40',
@@ -1283,7 +1330,7 @@ test.describe('Vocabulary emergence — coverage', () => {
       await readingPause(page, 250);
     }
 
-    await page.getByRole('button', { name: /End dialogue/i }).click();
+    await finishDialogue(page);
     await fillPositionForm(page, {
       stance: 'Unsure',
       confidence: '40',
@@ -1434,7 +1481,7 @@ test.describe('Form validation — additional edges', () => {
     await page.getByRole('button', { name: /Start the dialogue/i }).click();
     await expect(page.getByText(/Stakeholder personas/i)).toBeVisible();
 
-    await page.getByRole('button', { name: /End dialogue/i }).click();
+    await finishDialogue(page);
     await fillPositionForm(page, {
       stance: 'Unsure',
       confidence: '50',

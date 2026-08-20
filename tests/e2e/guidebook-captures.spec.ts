@@ -190,6 +190,9 @@ test('LD learning-journey screenshots', async ({ page }) => {
 
   // 10 — End dialogue → post-form
   await page.getByRole('button', { name: /End dialogue/i }).click();
+  if (await page.getByTestId('finish-review-warning').isVisible()) {
+    await page.getByRole('button', { name: /End anyway/i }).click();
+  }
   await page.getByRole('heading', { name: /Where do you stand now/i }).waitFor();
   await shot(page, '12-post-form-empty');
 

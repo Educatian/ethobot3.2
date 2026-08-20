@@ -105,6 +105,27 @@ const extractLastQuestion = (text: string): string | null => {
   return trimmed.slice(priorBoundary + 1, questionEnd + 1).trim() || null;
 };
 
+export const isConversationExitIntent = (text: string): boolean => {
+  const normalized = text.trim().toLowerCase();
+  if (!normalized) return false;
+  return [
+    /\b(?:end|finish|stop|close|leave)\b.{0,32}\b(?:conversation|dialogue|chat|session)\b/i,
+    /\b(?:i\s+(?:need|want|have)\s+to)\s+(?:go|leave|stop|end)\b/i,
+    /(?:대화|세션|채팅).{0,16}(?:끝|종료|그만)/,
+    /(?:끝내|종료해|그만할|나가야)/,
+  ].some(pattern => pattern.test(normalized));
+};
+
+const pausedPromptReturnText = (prompt: string, language: string): string =>
+  language === 'ko'
+    ? `보류했던 질문으로 돌아가 볼게요: ${prompt}`
+    : `Let's return to the paused question: ${prompt}`;
+
+const pausedPromptExitText = (prompt: string, language: string): string =>
+  language === 'ko'
+    ? `대화를 마치기 전에 아직 답하지 않은 질문이 있어요: ${prompt}\n\n답변해도 되고, 아래의 대화 마치기 버튼을 눌러 그대로 종료해도 됩니다.`
+    : `Before we close, one question is still open: ${prompt}\n\nYou can answer it, or use the End dialogue button to close anyway.`;
+
 export const usePersonaSession = (args: UsePersonaSessionArgs): UsePersonaSessionResult => {
   const {
     scenario,
@@ -404,10 +425,18 @@ export const usePersonaSession = (args: UsePersonaSessionArgs): UsePersonaSessio
           full += chunk ?? '';
           updateMessage(botId, { text: full + '...' });
         }
-        const responseText = full || '(facilitator response unavailable)';
+        const normalizedPausedPrompt = pausedPrompt?.trim() || null;
+        const reconnectText = normalizedPausedPrompt
+          ? pausedPromptReturnText(normalizedPausedPrompt, language)
+          : '';
+        const responseText =
+          [full.trim(), reconnectText].filter(Boolean).join('\n\n') ||
+          '(facilitator response unavailable)';
         updateMessage(botId, { text: responseText });
         updateSuspendedFacilitatorPrompt(null);
-        updatePendingFacilitatorPrompt(extractLastQuestion(responseText));
+        updatePendingFacilitatorPrompt(
+          normalizedPausedPrompt ?? extractLastQuestion(responseText)
+        );
         if (logContext) {
           logCat100Event('CAT100_PERSONA_EXITED', logContext, {
             scenarioId: scenario.id,
@@ -418,13 +447,16 @@ export const usePersonaSession = (args: UsePersonaSessionArgs): UsePersonaSessio
           });
         }
       } catch (error) {
-        const fallback = 'Facilitator could not return. Please continue.';
+        const normalizedPausedPrompt = pausedPrompt?.trim() || null;
+        const fallback = normalizedPausedPrompt
+          ? pausedPromptReturnText(normalizedPausedPrompt, language)
+          : 'Facilitator could not return. Please continue.';
         updateMessage(botId, { text: fallback });
         updateSuspendedFacilitatorPrompt(null);
-        updatePendingFacilitatorPrompt(null);
+        updatePendingFacilitatorPrompt(normalizedPausedPrompt);
       }
     },
-    [appendMessage, condition, logContext, scenario.id, updateMessage, updatePendingFacilitatorPrompt, updateSuspendedFacilitatorPrompt]
+    [appendMessage, condition, language, logContext, scenario.id, updateMessage, updatePendingFacilitatorPrompt, updateSuspendedFacilitatorPrompt]
   );
 
   const sendMessage = useCallback(
@@ -442,13 +474,41 @@ export const usePersonaSession = (args: UsePersonaSessionArgs): UsePersonaSessio
         turnNumber,
       };
       appendMessage(learnerMsg);
-      setIsLoading(true);
 
       const inPersona = phase === 'in_persona' && activePersona !== null;
-      if (!inPersona) updatePendingFacilitatorPrompt(null);
+      const unresolvedFacilitatorPrompt = inPersona
+        ? null
+        : pendingFacilitatorPromptRef.current?.trim() || null;
       if (inPersona) personaTurnRef.current += 1;
 
       trackVocabulary(trimmed, turnNumber);
+
+      if (
+        !inPersona &&
+        unresolvedFacilitatorPrompt &&
+        isConversationExitIntent(trimmed)
+      ) {
+        const exitReminder = pausedPromptExitText(unresolvedFacilitatorPrompt, language);
+        appendMessage({
+          id: id('facilitator-open-question'),
+          speaker: 'facilitator',
+          text: exitReminder,
+          timestamp: now(),
+          turnNumber,
+        });
+        updatePendingFacilitatorPrompt(unresolvedFacilitatorPrompt);
+        if (logContext) {
+          logCat100MessageExchange(logContext, trimmed, exitReminder, {
+            scenarioId: scenario.id,
+            condition: condition ?? ('learner_directed' as StudyCondition),
+            turnNumber,
+          });
+        }
+        return;
+      }
+
+      setIsLoading(true);
+      if (!inPersona) updatePendingFacilitatorPrompt(null);
 
       const speakerSlot: Cat100Message = inPersona
         ? {
@@ -541,6 +601,7 @@ export const usePersonaSession = (args: UsePersonaSessionArgs): UsePersonaSessio
       expectedPersonaTurns,
       isChatReady,
       isLoading,
+      language,
       logContext,
       maybeFireRecommendation,
       phase,
