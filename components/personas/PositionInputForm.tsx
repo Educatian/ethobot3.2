@@ -116,7 +116,7 @@ const PositionInputForm: React.FC<PositionInputFormProps> = ({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-6 pb-20 sm:pb-0">
       {helperText && <p className="text-sm text-lyceum-muted italic">{helperText}</p>}
 
       <fieldset>
@@ -184,7 +184,7 @@ const PositionInputForm: React.FC<PositionInputFormProps> = ({
                 key={value}
                 className={`flex items-center justify-between gap-3 px-3 py-2 rounded border text-sm transition-colors ${
                   rank !== ''
-                    ? 'border-alabama-crimson bg-crimson-light text-lyceum-ink'
+                    ? 'border-emerald-600 bg-emerald-50 text-emerald-950 ring-1 ring-emerald-200'
                     : atCapacity
                     ? 'border-lyceum-line bg-lyceum-paper-deep text-lyceum-muted cursor-not-allowed'
                     : 'border-lyceum-line bg-lyceum-paper/95 text-lyceum-ink hover:border-alabama-crimson/60'
@@ -196,7 +196,11 @@ const PositionInputForm: React.FC<PositionInputFormProps> = ({
                   value={rank}
                   disabled={atCapacity}
                   onChange={e => setValueRank(value, e.target.value ? Number(e.target.value) : null)}
-                  className="h-8 w-16 rounded border border-lyceum-line bg-white px-2 text-sm font-mono text-lyceum-ink disabled:bg-lyceum-paper-deep"
+                  className={`h-8 w-16 rounded border px-2 text-sm font-mono disabled:bg-lyceum-paper-deep ${
+                    rank !== ''
+                      ? 'border-emerald-600 bg-emerald-50 text-emerald-950'
+                      : 'border-lyceum-line bg-white text-lyceum-ink'
+                  }`}
                 >
                   <option value="">--</option>
                   {Array.from({ length: maxValues }, (_, index) => index + 1).map(optionRank => (
@@ -218,10 +222,10 @@ const PositionInputForm: React.FC<PositionInputFormProps> = ({
       <button
         type="submit"
         disabled={!isValid}
-        className={`w-full py-3 rounded text-sm font-semibold tracking-wide transition-colors ${
+        className={`sticky bottom-2 z-10 w-full py-3 rounded border text-sm font-semibold tracking-wide transition-colors sm:static ${
           isValid
-            ? 'bg-alabama-crimson text-white hover:bg-crimson-dark shadow-ambient'
-            : 'bg-lyceum-paper-deep text-lyceum-muted cursor-not-allowed'
+            ? 'border-alabama-crimson bg-alabama-crimson text-white hover:bg-crimson-dark shadow-ambient'
+            : 'border-lyceum-line bg-white text-lyceum-muted cursor-not-allowed shadow-sm'
         }`}
       >
         {submitLabel}
