@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { formatMessageText } from '../utils/messageFormatting';
 import type { Challenge, KnowledgeSource, Message } from '../types';
 import { getChallengeById, getKnowledgeSourceById } from '../services/dataService';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -120,13 +121,10 @@ const MessageBubble: React.FC<MessageProps> = ({ message, isSending, onSendMessa
         );
       }
 
-      let formattedPart = part.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-      formattedPart = formattedPart.replace(/\*(.*?)\*/g, '<em>$1</em>');
-
       return (
         <span
           key={`${message.id}-t-${index}`}
-          dangerouslySetInnerHTML={{ __html: formattedPart.replace(/\n/g, '<br />') }}
+          dangerouslySetInnerHTML={{ __html: formatMessageText(part) }}
         />
       );
     });

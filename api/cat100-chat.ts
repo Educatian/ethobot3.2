@@ -63,9 +63,21 @@ export default async function handler(req: Request): Promise<Response> {
     return new Response('Invalid JSON', { status: 400, headers: corsHeaders });
   }
 
+  if (!body || typeof body !== 'object' || Array.isArray(body)) {
+    return new Response('A JSON object is required', { status: 400, headers: corsHeaders });
+  }
   const messages = body.messages ?? [];
-  if (messages.length === 0) {
+  if (!Array.isArray(messages) || messages.length === 0 || messages.length > 100) {
     return new Response('messages array is required', { status: 400, headers: corsHeaders });
+  }
+  if (messages.some(message => !message || !['system', 'user', 'assistant'].includes(message.role) || typeof message.content !== 'string') ||
+      messages.reduce((length, message) => length + message.content.length, 0) > 200000) {
+    return new Response('Invalid messages', { status: 400, headers: corsHeaders });
+  }
+  if ((body.model !== undefined && !FALLBACK_CHAIN.includes(body.model)) ||
+      (body.temperature !== undefined && (typeof body.temperature !== 'number' || !Number.isFinite(body.temperature) || body.temperature < 0 || body.temperature > 2)) ||
+      (body.max_tokens !== undefined && (!Number.isInteger(body.max_tokens) || body.max_tokens < 1 || body.max_tokens > 2000))) {
+    return new Response('Invalid generation options', { status: 400, headers: corsHeaders });
   }
 
   const requestedModel = body.model ?? FALLBACK_CHAIN[0];
